@@ -3,7 +3,7 @@ Supports comfyui/API calls/modelscope calls
 
 2026/08/28:
 
-此项目已停更，全新版本请前往：www.DX-OS.com下载。
+此项目已停更，全新版本请前往：www.DX-OS.com 下载。
 功能特性：
 1. 画布功能全新升级，支持Agent/一键分层/多人协同/共享画布/免费公网图床
 2. 软件内即可启动ComfyUI/映射工作流等
