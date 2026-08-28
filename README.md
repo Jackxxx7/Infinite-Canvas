@@ -11,6 +11,8 @@ Supports comfyui/API calls/modelscope calls
 4. 全新的账号管理/APP权限系统
 5. 提供开发者模式，可以开发自己公司的业务软件离线运行
 
+-----
+
 
 配套的chrome采集插件已经上线：https://chromewebstore.google.com/detail/infinite-canvas-%E5%9B%BE%E5%83%8F%E8%A7%86%E9%A2%91%E6%96%87%E5%AD%97%E6%8A%93%E5%8F%96%E5%B7%A5/ajfhnbklbmpfaaookhfakohabnpmlcic?authuser=0&hl=en
 
