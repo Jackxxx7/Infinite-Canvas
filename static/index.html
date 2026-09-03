@@ -66,22 +66,22 @@
 
         html.theme-dark,
         body.theme-dark {
-            --bg: #0f141d;
-            --sidebar-bg: #0f141d;
-            --stage-bg: #111722;
-            --border: #242d3b;
-            --stage-border: #2a3444;
-            --text: #e5e9f0;
-            --muted: #8f9aab;
-            --nav-hover-bg: #171d29;
-            --monitor-bg: rgba(23, 29, 41, 0.82);
+            --bg: #232426;
+            --sidebar-bg: #252628;
+            --stage-bg: #292a2d;
+            --border: #3b3c40;
+            --stage-border: #45464b;
+            --text: #eeeeef;
+            --muted: #a7a8ad;
+            --nav-hover-bg: #303135;
+            --monitor-bg: rgba(48, 49, 53, 0.88);
             --monitor-border: rgba(255, 255, 255, 0.08);
             --monitor-shadow: rgba(0, 0, 0, 0.3);
             --divider: rgba(255, 255, 255, 0.15);
-            --scrollbar: #334155;
-            --scrollbar-hover: #475569;
-            --author-name: #e5e9f0;
-            --social-icon: #64748b;
+            --scrollbar: #5b5c61;
+            --scrollbar-hover: #73747b;
+            --author-name: #eeeeef;
+            --social-icon: #85868c;
         }
 
         /* 极简滚动条 */
@@ -247,7 +247,7 @@
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            border-radius: 18px;
+            border-radius: 999px;
             cursor: pointer;
             /* 只对 width 做带延迟的过渡（侧栏悬停展开效果）；background/color 不参与过渡，避免 active 切换时底色"流动" */
             transition: width 0.3s var(--fluid-ease) 0.5s;
@@ -299,7 +299,7 @@
             margin: 0 0 6px;
             padding-left: 14px;
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: 999px;
             background: transparent;
             color: var(--muted);
             display: flex;
@@ -399,9 +399,22 @@
             transition: background 0.3s, border-color 0.3s;
         }
 
+        /* 智能画布使用完整视口，避免被默认舞台外框包住。 */
+        .stage.canvas-stage-active {
+            margin: 0;
+            border: 0;
+            border-radius: 0;
+        }
+
         body.studio-scale-host .stage {
             margin: max(10px, calc(16px * var(--studio-ui-scale, 1)));
             border-radius: max(20px, calc(32px * var(--studio-ui-scale, 1)));
+        }
+
+        body.studio-scale-host .stage.canvas-stage-active {
+            margin: 0;
+            border-radius: 0;
+            border: 0;
         }
 
         iframe {
@@ -1793,6 +1806,7 @@
             target.classList.add('active');
             if (!target.src) target.src = target.dataset.src;
             if(!options.skipRemember) localStorage.setItem(ACTIVE_PAGE_KEY, id);
+            document.querySelector('.stage')?.classList.toggle('canvas-stage-active', id === 'canvas');
             // sync theme to newly activated iframe
             syncThemeToFrame(target);
             syncLanguageToFrame(target);

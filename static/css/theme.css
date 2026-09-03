@@ -1649,3 +1649,99 @@ body.studio-theme-dark .shell .comfy-random-btn.active svg {
     fill: none !important;
     stroke: #0f172a !important;
 }
+
+/* 统一深灰夜间主题：保留层次对比，避免页面接近纯黑。 */
+html.studio-theme-dark,
+html.studio-theme-dark body,
+body.studio-theme-dark {
+    background: #232426 !important;
+    color: #eeeeef !important;
+}
+
+body.studio-theme-dark {
+    --bg: #232426;
+    --bg-base: #232426;
+    --page: #232426;
+    --card: #2b2c2f;
+    --card-solid: #2b2c2f;
+    --soft: #252629;
+    --soft-2: #303135;
+    --panel: rgba(48,49,53,.95);
+    --text: #eeeeef;
+    --text-main: #eeeeef;
+    --accent: #eeeeef;
+    --line: #45464b;
+    --line-2: #55565c;
+}
+
+html.studio-theme-dark body .app-shell,
+html.studio-theme-dark body .sidebar,
+html.studio-theme-dark body .stage,
+html.studio-theme-dark body .shell,
+body.studio-theme-dark .app-shell,
+body.studio-theme-dark .sidebar,
+body.studio-theme-dark .stage,
+body.studio-theme-dark .shell {
+    background: #232426 !important;
+    border-color: #45464b !important;
+}
+
+html.studio-theme-dark body .stage,
+body.studio-theme-dark .stage {
+    background: #292a2d !important;
+}
+
+html.studio-theme-dark body .console-card,
+html.studio-theme-dark body .nano-input,
+html.studio-theme-dark body .upload-item,
+html.studio-theme-dark body .result-frame,
+html.studio-theme-dark body .masonry-item,
+html.studio-theme-dark body .engine-panel,
+html.studio-theme-dark body .tool-panel,
+html.studio-theme-dark body .control-panel,
+html.studio-theme-dark body .engine-switch,
+html.studio-theme-dark body .mode-switcher,
+html.studio-theme-dark body .setting-row,
+html.studio-theme-dark body .provider-switch,
+html.studio-theme-dark body .bg-white,
+html.studio-theme-dark body .bg-white\/90,
+html.studio-theme-dark body .bg-gray-50,
+html.studio-theme-dark body .bg-gray-100,
+body.studio-theme-dark .console-card,
+body.studio-theme-dark .nano-input,
+body.studio-theme-dark .upload-item,
+body.studio-theme-dark .result-frame,
+body.studio-theme-dark .masonry-item,
+body.studio-theme-dark .engine-panel,
+body.studio-theme-dark .tool-panel,
+body.studio-theme-dark .control-panel,
+body.studio-theme-dark .engine-switch,
+body.studio-theme-dark .mode-switcher,
+body.studio-theme-dark .setting-row,
+body.studio-theme-dark .provider-switch,
+body.studio-theme-dark .bg-white,
+body.studio-theme-dark .bg-white\/90,
+body.studio-theme-dark .bg-gray-50,
+body.studio-theme-dark .bg-gray-100 {
+    background-color: #2b2c2f !important;
+    border-color: #45464b !important;
+    color: #eeeeef !important;
+}
+
+html.studio-theme-dark body input,
+html.studio-theme-dark body textarea,
+html.studio-theme-dark body select,
+body.studio-theme-dark input,
+body.studio-theme-dark textarea,
+body.studio-theme-dark select {
+    background-color: #252629 !important;
+    border-color: #55565c !important;
+    color: #eeeeef !important;
+}
+
+html.studio-theme-dark body .nav-item:hover,
+body.studio-theme-dark .nav-item:hover,
+html.studio-theme-dark body .side-pill:hover,
+body.studio-theme-dark .side-pill:hover {
+    background: #303135 !important;
+}
