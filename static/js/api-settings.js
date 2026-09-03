@@ -2615,17 +2615,96 @@ function setJimengStatus(text, ok=null){
     jimengCliStatus.classList.toggle('ok', ok === true);
     jimengCliStatus.classList.toggle('bad', ok === false);
 }
+const JIMENG_LOGIN_TIMEOUT_MS = 5 * 60 * 1000;
+let jimengLoginTimer = null;
+let jimengLoginCountdownTimer = null;
+let jimengLoginDeadline = 0;
+let jimengLoginInfoText = '';
+let jimengLoginRefreshScheduled = false;
+
+function jimengCountdownText(remainingMs){
+    const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    return `${minutes}:${seconds}`;
+}
+
+function stopJimengLoginPolling(){
+    clearInterval(jimengLoginTimer);
+    clearInterval(jimengLoginCountdownTimer);
+    jimengLoginTimer = null;
+    jimengLoginCountdownTimer = null;
+    jimengLoginDeadline = 0;
+}
+
+function updateJimengLoginCountdown(){
+    if(!jimengLoginDeadline) return true;
+    const remaining = jimengLoginDeadline - Date.now();
+    if(remaining <= 0){
+        stopJimengLoginPolling();
+        setJimengStatus('登录超时', false);
+        if(jimengCredit) jimengCredit.textContent = '登录轮询已结束，请重新点击“浏览器登录”。';
+        return false;
+    }
+    setJimengStatus(`轮询中 ${jimengCountdownText(remaining)}`);
+    return true;
+}
+
+function jimengLoginFields(data){
+    const text = String(data?.text || '');
+    const allowed = new Set(['verification_uri', 'verification_uri_complete', 'user_code', 'device_code', 'poll_interval', 'expires_at']);
+    const lines = [];
+    text.split(/\r?\n/).forEach(line => {
+        const match = line.match(/^\s*([A-Za-z_]+)\s*[:=]\s*(.*?)\s*$/);
+        if(!match || !allowed.has(match[1].toLowerCase())) return;
+        const key = match[1].toLowerCase();
+        lines.push(`${key}=${match[2]}`);
+    });
+    return lines.join('\n');
+}
+
 function renderJimengLoginBox(data){
     if(!jimengLoginBox) return;
-    const text = data?.text || '';
-    const qrUrl = data?.qr_url || '';
-    const qrHtml = qrUrl && qrUrl.startsWith('http')
-        ? `<img class="jimeng-qr-img" src="${escapeHtml(qrUrl)}" alt="即梦登录二维码">`
-        : '';
+    const text = jimengLoginFields(data);
+    if(text === jimengLoginInfoText && !jimengLoginBox.hidden) return;
+    jimengLoginInfoText = text;
     jimengLoginBox.hidden = false;
-    jimengLoginBox.innerHTML = `${qrHtml}<pre>${escapeHtml(text || '等待 CLI 输出登录二维码...')}</pre>`;
+    jimengLoginBox.innerHTML = `
+        <div class="jimeng-login-toolbar">
+            <button class="action-btn" type="button" onclick="copyJimengLoginInfo()" ${text ? '' : 'disabled'}>
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i><span>复制认证信息</span>
+            </button>
+            <span id="jimengCopyStatus" class="jimeng-copy-status"></span>
+        </div>
+        <pre id="jimengLoginInfo">${escapeHtml(text || '等待 CLI 输出浏览器认证信息...')}</pre>`;
 }
-let jimengLoginTimer = null;
+
+async function copyJimengLoginInfo(){
+    const text = String(jimengLoginInfoText || '').trim();
+    if(!text) return;
+    let copied = false;
+    try {
+        if(navigator.clipboard?.writeText){
+            await navigator.clipboard.writeText(text);
+            copied = true;
+        }
+    } catch(_) {}
+    if(!copied){
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        try { copied = document.execCommand('copy'); } catch(_) {}
+        area.remove();
+    }
+    const status = document.getElementById('jimengCopyStatus');
+    if(status){
+        status.textContent = copied ? '已复制' : '复制失败，请手动选择文本';
+        window.setTimeout(() => { if(status) status.textContent = ''; }, 2200);
+    }
+}
 async function refreshJimengStatus(showCredit=true){
     if(!jimengCliPanel || jimengCliPanel.hidden) return;
     setJimengStatus('检测中...');
@@ -2643,7 +2722,11 @@ async function refreshJimengStatus(showCredit=true){
     }
 }
 async function startJimengLogin(){
-    setJimengStatus('等待扫码...');
+    stopJimengLoginPolling();
+    jimengLoginInfoText = '';
+    jimengLoginRefreshScheduled = false;
+    jimengLoginDeadline = Date.now() + JIMENG_LOGIN_TIMEOUT_MS;
+    updateJimengLoginCountdown();
     if(jimengCredit) jimengCredit.textContent = '';
     try {
         const data = await fetch('/api/jimeng/login/start', {method:'POST'}).then(async r => {
@@ -2652,10 +2735,12 @@ async function startJimengLogin(){
             return json;
         });
         renderJimengLoginBox(data);
-        clearInterval(jimengLoginTimer);
+        updateJimengLoginCountdown();
         jimengLoginTimer = setInterval(pollJimengLogin, 2500);
+        jimengLoginCountdownTimer = setInterval(updateJimengLoginCountdown, 1000);
         refreshIcons();
     } catch(e){
+        stopJimengLoginPolling();
         setJimengStatus('登录失败', false);
         if(jimengLoginBox){
             jimengLoginBox.hidden = false;
@@ -2664,21 +2749,30 @@ async function startJimengLogin(){
     }
 }
 async function pollJimengLogin(){
+    if(!updateJimengLoginCountdown()) return;
     try {
         const data = await fetch('/api/jimeng/login/status').then(r => r.json());
         renderJimengLoginBox(data);
         if(data.logged_in){
-            clearInterval(jimengLoginTimer);
+            stopJimengLoginPolling();
             setJimengStatus('已登录', true);
             if(jimengCredit) jimengCredit.textContent = jimengCreditText(data.raw);
+            if(!jimengLoginRefreshScheduled){
+                jimengLoginRefreshScheduled = true;
+                window.setTimeout(() => window.location.reload(), 800);
+            }
         } else if(data.running){
-            setJimengStatus('等待扫码...');
+            updateJimengLoginCountdown();
         } else {
+            stopJimengLoginPolling();
             setJimengStatus('未登录', false);
         }
     } catch(e){
-        clearInterval(jimengLoginTimer);
-        setJimengStatus('登录检测失败', false);
+        if(jimengLoginDeadline){
+            setJimengStatus(`轮询失败 ${jimengCountdownText(jimengLoginDeadline - Date.now())}`, false);
+        } else {
+            setJimengStatus('登录检测失败', false);
+        }
     }
 }
 async function refreshJimengCredit(){
