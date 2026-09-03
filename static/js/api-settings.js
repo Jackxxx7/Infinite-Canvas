@@ -2644,7 +2644,7 @@ function jimengLoginFields(data){
     text.split(/\r?\n/).forEach(line => {
         const match = line.match(/^\s*verification_uri(?:_complete)?\s*[:=]\s*(.*?)\s*$/i);
         if(match && /%3A%2F%2F|passport%2Fopen%2Fscan_user_code/i.test(match[1])){
-            encodedUris.push(`verification_uri=${match[1]}`);
+            encodedUris.push(match[1]);
         }
     });
     return encodedUris[0] || '';
