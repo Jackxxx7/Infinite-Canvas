@@ -715,7 +715,7 @@
             transition: max-height .28s var(--fluid-ease), opacity .18s ease;
         }
         .settings-fold-group:not(.is-collapsed) {
-            max-height: 132px;
+            max-height: 176px;
             opacity: 1;
             pointer-events: auto;
         }
@@ -862,7 +862,7 @@
                 gap: 5px;
             }
             .settings-fold-group:not(.is-collapsed) {
-                max-height: 105px;
+                max-height: 145px;
             }
             .side-pill {
                 height:30px;
@@ -913,7 +913,7 @@
                 gap: 4px;
             }
             .settings-fold-group:not(.is-collapsed) {
-                max-height: 102px;
+                max-height: 140px;
             }
             .side-pill {
                 height:30px;
@@ -1564,6 +1564,13 @@
                         </svg>
                         <span class="side-pill-text" data-i18n="common.darkMode">黑夜模式</span>
                     </button>
+                    <button class="side-pill" onclick="checkForUpdates(true)" id="check-update-btn" type="button" title="检查更新">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+                            <path d="M21 3v6h-6"></path>
+                        </svg>
+                        <span class="side-pill-text" data-i18n="common.checkUpdates">检查更新</span>
+                    </button>
                     <button class="side-pill" onclick="toggleLanguage()" id="lang-toggle-btn" type="button" title="Language">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -1729,8 +1736,8 @@
         const SIDEBAR_PINNED_KEY = 'studio_sidebar_pinned';
         const DEFAULT_PAGE_ID = 'canvas';
         const PAGE_IDS = ['canvas','gpt-chat','asset-manager','api-settings','comfyui-settings'];
-        const PROJECT_URL = 'https://github.com/hero8152/Infinite-Canvas';
-        let appInfo = { version:'', repo_url:PROJECT_URL, version_url:'https://raw.githubusercontent.com/hero8152/Infinite-Canvas/main/VERSION' };
+        const PROJECT_URL = 'https://github.com/Jackxxx7/Infinite-Canvas';
+        let appInfo = { version:'', repo_url:PROJECT_URL, version_url:'https://raw.githubusercontent.com/Jackxxx7/Infinite-Canvas/main/VERSION' };
         let updateConnectivityResult = null;
         let projectUpdateRunning = false;
         let projectUpdateAbort = null;  // 当前更新请求的 AbortController，便于用户中途取消
@@ -2257,8 +2264,8 @@
             const github = sources.github || {};
             const ms = sources.modelscope || {};
             return [
-                { name:'GitHub 更新列表', url:github.tree_url || appInfo.tree_url || 'https://api.github.com/repos/hero8152/Infinite-Canvas/git/trees/main?recursive=1', source:'github', required:true },
-                { name:'GitHub 版本文件', url:github.version_url || appInfo.version_url || 'https://raw.githubusercontent.com/hero8152/Infinite-Canvas/main/VERSION', source:'github', required:true },
+                { name:'GitHub 更新列表', url:github.tree_url || appInfo.tree_url || 'https://api.github.com/repos/Jackxxx7/Infinite-Canvas/git/trees/main?recursive=1', source:'github', required:true },
+                { name:'GitHub 版本文件', url:github.version_url || appInfo.version_url || 'https://raw.githubusercontent.com/Jackxxx7/Infinite-Canvas/main/VERSION', source:'github', required:true },
                 { name:'GitHub 主页', url:'https://github.com/', source:'github' },
                 { name:'ModelScope 版本文件', url:ms.version_url || 'https://www.modelscope.cn/api/v1/studio/Daniel8152/Infinite-Canvas/repo?Revision=master&FilePath=VERSION', source:'modelscope', required:true },
                 { name:'ModelScope 空间页面', url:ms.repo_url || 'https://modelscope.cn/studios/Daniel8152/Infinite-Canvas', source:'modelscope' },
@@ -2714,7 +2721,14 @@
                 }
                 if(manual) {
                     if(hasUpdate) {
-                        openProjectUpdateModal();
+                        const updateMessage = isEn
+                            ? `A new version is available.\n\nCurrent version: ${versionLabel(current)}\nLatest version: ${versionLabel(best.version)}\n\nUpdate now?`
+                            : `发现新版本。\n\n当前版本：${versionLabel(current)}\n最新版本：${versionLabel(best.version)}\n\n是否现在更新？`;
+                        if(confirm(updateMessage)) {
+                            // 只有用户在检查更新后明确确认，才开始手动更新。
+                            openProjectUpdateModal();
+                            await confirmProjectUpdate();
+                        }
                     } else if(reachable) {
                         alert(isEn ? `You are on the latest version (${versionLabel(current)}).` : `已是最新版本（${versionLabel(current)}）。`);
                     } else {

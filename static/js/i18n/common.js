@@ -5,6 +5,7 @@
         "common.comfyuiSettings": { zh: "工作流设置", en: "Workflow Settings" },
         "common.darkMode": { zh: "黑夜模式", en: "Dark Mode" },
         "common.lightMode": { zh: "白天模式", en: "Light Mode" },
+        "common.checkUpdates": { zh: "检查更新", en: "Check for updates" },
         "common.language": { zh: "中文", en: "English" },
         "common.cancel": { zh: "取消", en: "Cancel" },
         "common.confirm": { zh: "确定", en: "Confirm" },
