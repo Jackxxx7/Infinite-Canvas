@@ -2208,8 +2208,44 @@ def safe_static_dir() -> str:
         raise RuntimeError(f"static 路径不安全：{target}")
     return target
 
+def restart_command_for_current_process() -> List[str]:
+    """生成与当前服务一致的启动命令，避免 VPS 误用 macOS 启动脚本。"""
+    python_executable = os.path.abspath(sys.executable or "")
+    if not python_executable:
+        raise RuntimeError("无法确定当前 Python 解释器")
+
+    argv = [str(arg) for arg in sys.argv]
+    # uvicorn 直接启动和 `python -m uvicorn` 的 sys.argv 形式略有不同，
+    # 但两者都会携带 main:app；保留原参数即可复用 VPS 上的 2077 端口。
+    if "main:app" in argv[1:]:
+        return [python_executable, "-m", "uvicorn", *argv[1:]]
+    if argv and os.path.basename(argv[0]).lower() == "main.py":
+        return [python_executable, os.path.join(BASE_DIR, "main.py"), *argv[1:]]
+
+    # 兼容直接运行 main.py 之外的方式；VPS 首次部署通常会使用这一兜底。
+    return [python_executable, os.path.join(BASE_DIR, "main.py")]
+
+
+def systemd_unit_for_pid(pid: int) -> str:
+    """返回当前进程所属的 systemd unit；无法识别时返回空字符串。"""
+    if not os.environ.get("INVOCATION_ID"):
+        return ""
+    try:
+        result = subprocess.run(
+            ["systemctl", "show", f"--pid={pid}", "--property=Id", "--value"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        unit = result.stdout.strip()
+        return unit if unit.endswith(".service") and "\n" not in unit else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
 def schedule_self_restart(delay_seconds: int = 3) -> bool:
-    """派生脱离父进程的小脚本，等几秒后启动启动服务脚本，并干掉当前 PID。"""
+    """更新完成后重启服务，并复用当前解释器、启动参数和 VPS 端口。"""
     delay = max(1, int(delay_seconds or 3))
     pid = os.getpid()
     try:
@@ -2253,20 +2289,42 @@ def schedule_self_restart(delay_seconds: int = 3) -> bool:
                 close_fds=True,
             )
         else:
-            launcher = os.path.join(BASE_DIR, "mac-启动服务.command")
-            if not os.path.exists(launcher):
-                launcher = os.path.join(BASE_DIR, "start.sh")
             sh_path = os.path.join(BASE_DIR, "_self_restart.sh")
-            script = (
-                "#!/bin/sh\n"
-                f"sleep {delay}\n"
-                f"kill -9 {pid} 2>/dev/null\n"
-                f"cd \"{BASE_DIR}\"\n"
-                f"if [ -x \"{launcher}\" ]; then nohup \"{launcher}\" >/dev/null 2>&1 &\n"
-                f"elif [ -f \"{launcher}\" ]; then nohup /bin/sh \"{launcher}\" >/dev/null 2>&1 &\n"
-                "fi\n"
-                "rm -- \"$0\"\n"
-            )
+            restart_command = restart_command_for_current_process()
+            restart_line = " ".join(shlex.quote(part) for part in restart_command)
+            systemd_unit = systemd_unit_for_pid(pid)
+
+            # systemd 会根据 unit 的 ExecStart 自动拉起新进程。PID 1 是容器
+            # 常见的管理方式，也应让容器重启策略接管，不能启动第二份服务。
+            managed_by_runtime = bool(systemd_unit) or pid == 1
+            script_parts = [
+                "#!/bin/sh",
+                "set -u",
+                f"sleep {delay}",
+            ]
+            if systemd_unit:
+                script_parts.extend([
+                    f"systemctl restart {shlex.quote(systemd_unit)} >/dev/null 2>&1 || true",
+                ])
+            else:
+                script_parts.extend([
+                    f"old_pid={pid}",
+                    'kill -TERM "$old_pid" 2>/dev/null || true',
+                    "i=0",
+                    'while kill -0 "$old_pid" 2>/dev/null; do',
+                    "  i=$((i + 1))",
+                    '  if [ "$i" -ge 10 ]; then kill -KILL "$old_pid" 2>/dev/null || true; break; fi',
+                    "  sleep 1",
+                    "done",
+                ])
+            if not managed_by_runtime:
+                script_parts.extend([
+                    "sleep 1",
+                    f"cd {shlex.quote(BASE_DIR)}",
+                    f"nohup {restart_line} >/dev/null 2>&1 </dev/null &",
+                ])
+            script_parts.append('rm -- "$0"')
+            script = "\n".join(script_parts) + "\n"
             with open(sh_path, "w", encoding="utf-8") as f:
                 f.write(script)
             os.chmod(sh_path, 0o755)
@@ -19129,5 +19187,7 @@ if __name__ == "__main__":
     # 关闭服务端协议级 WebSocket ping：部分客户端（如 PS UXP 面板）不会自动回 pong，
     # 默认 20s ping/20s 超时会把这些连接每隔一会儿就踢掉造成"频繁断连"。
     # 客户端有自己的应用层心跳 + 断线重连兜底，这里禁用协议 ping 更稳。
-    uvicorn.run(app, host="0.0.0.0", port=3000,
+    app_host = os.getenv("INFINITE_CANVAS_HOST", "0.0.0.0")
+    app_port = int(os.getenv("INFINITE_CANVAS_PORT", os.getenv("PORT", "3000")))
+    uvicorn.run(app, host=app_host, port=app_port,
                 ws_ping_interval=None, ws_ping_timeout=None)
