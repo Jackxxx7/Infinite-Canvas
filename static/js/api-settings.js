@@ -2617,50 +2617,37 @@ function setJimengStatus(text, ok=null){
 }
 const JIMENG_LOGIN_TIMEOUT_MS = 5 * 60 * 1000;
 let jimengLoginTimer = null;
-let jimengLoginCountdownTimer = null;
 let jimengLoginDeadline = 0;
 let jimengLoginInfoText = '';
 let jimengLoginRefreshScheduled = false;
 
-function jimengCountdownText(remainingMs){
-    const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
-    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const seconds = String(totalSeconds % 60).padStart(2, '0');
-    return `${minutes}:${seconds}`;
-}
-
 function stopJimengLoginPolling(){
     clearInterval(jimengLoginTimer);
-    clearInterval(jimengLoginCountdownTimer);
     jimengLoginTimer = null;
-    jimengLoginCountdownTimer = null;
     jimengLoginDeadline = 0;
 }
 
-function updateJimengLoginCountdown(){
+function jimengLoginWithinDeadline(){
     if(!jimengLoginDeadline) return true;
-    const remaining = jimengLoginDeadline - Date.now();
-    if(remaining <= 0){
+    if(Date.now() >= jimengLoginDeadline){
         stopJimengLoginPolling();
         setJimengStatus('登录超时', false);
         if(jimengCredit) jimengCredit.textContent = '登录轮询已结束，请重新点击“浏览器登录”。';
         return false;
     }
-    setJimengStatus(`轮询中 ${jimengCountdownText(remaining)}`);
     return true;
 }
 
 function jimengLoginFields(data){
     const text = String(data?.text || '');
-    const allowed = new Set(['verification_uri', 'verification_uri_complete', 'user_code', 'device_code', 'poll_interval', 'expires_at']);
-    const lines = [];
+    const encodedUris = [];
     text.split(/\r?\n/).forEach(line => {
-        const match = line.match(/^\s*([A-Za-z_]+)\s*[:=]\s*(.*?)\s*$/);
-        if(!match || !allowed.has(match[1].toLowerCase())) return;
-        const key = match[1].toLowerCase();
-        lines.push(`${key}=${match[2]}`);
+        const match = line.match(/^\s*verification_uri(?:_complete)?\s*[:=]\s*(.*?)\s*$/i);
+        if(match && /%3A%2F%2F|passport%2Fopen%2Fscan_user_code/i.test(match[1])){
+            encodedUris.push(`verification_uri=${match[1]}`);
+        }
     });
-    return lines.join('\n');
+    return encodedUris[0] || '';
 }
 
 function renderJimengLoginBox(data){
@@ -2726,7 +2713,7 @@ async function startJimengLogin(){
     jimengLoginInfoText = '';
     jimengLoginRefreshScheduled = false;
     jimengLoginDeadline = Date.now() + JIMENG_LOGIN_TIMEOUT_MS;
-    updateJimengLoginCountdown();
+    setJimengStatus('等待浏览器认证...');
     if(jimengCredit) jimengCredit.textContent = '';
     try {
         const data = await fetch('/api/jimeng/login/start', {method:'POST'}).then(async r => {
@@ -2735,9 +2722,7 @@ async function startJimengLogin(){
             return json;
         });
         renderJimengLoginBox(data);
-        updateJimengLoginCountdown();
         jimengLoginTimer = setInterval(pollJimengLogin, 2500);
-        jimengLoginCountdownTimer = setInterval(updateJimengLoginCountdown, 1000);
         refreshIcons();
     } catch(e){
         stopJimengLoginPolling();
@@ -2749,7 +2734,7 @@ async function startJimengLogin(){
     }
 }
 async function pollJimengLogin(){
-    if(!updateJimengLoginCountdown()) return;
+    if(!jimengLoginWithinDeadline()) return;
     try {
         const data = await fetch('/api/jimeng/login/status').then(r => r.json());
         renderJimengLoginBox(data);
@@ -2762,17 +2747,13 @@ async function pollJimengLogin(){
                 window.setTimeout(() => window.location.reload(), 800);
             }
         } else if(data.running){
-            updateJimengLoginCountdown();
+            setJimengStatus('等待浏览器认证...');
         } else {
             stopJimengLoginPolling();
             setJimengStatus('未登录', false);
         }
     } catch(e){
-        if(jimengLoginDeadline){
-            setJimengStatus(`轮询失败 ${jimengCountdownText(jimengLoginDeadline - Date.now())}`, false);
-        } else {
-            setJimengStatus('登录检测失败', false);
-        }
+        setJimengStatus('登录检测失败', false);
     }
 }
 async function refreshJimengCredit(){

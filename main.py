@@ -310,6 +310,7 @@ JIMENG_LOGIN_SESSION = {
     "proc": None,
     "stdout": "",
     "stderr": "",
+    "device_code": "",
     "started_at": 0.0,
 }
 
@@ -376,6 +377,7 @@ try:
     JIMENG_DEFAULT_POLL_SECONDS = max(1, min(3600, int(os.getenv("JIMENG_POLL_SECONDS", "900"))))
 except Exception:
     JIMENG_DEFAULT_POLL_SECONDS = 900
+JIMENG_LOGIN_TIMEOUT_SECONDS = 5 * 60
 VOLCENGINE_DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
 VOLCENGINE_DEFAULT_PROJECT_NAME = "default"
 VOLCENGINE_DEFAULT_REGION = "cn-beijing"
@@ -6114,6 +6116,14 @@ def jimeng_login_text():
         if value:
             parts.append(value)
     return "\n".join(parts).strip()
+
+def jimeng_login_device_code(text):
+    match = re.search(r"(?im)^\s*device_code\s*[:=]\s*(\S+)", str(text or ""))
+    return match.group(1).strip() if match else ""
+
+def jimeng_login_session_expired():
+    started_at = float(JIMENG_LOGIN_SESSION.get("started_at") or 0)
+    return not started_at or time.time() - started_at >= JIMENG_LOGIN_TIMEOUT_SECONDS
 
 def jimeng_login_qr_from_text(text):
     text = str(text or "")
@@ -13108,7 +13118,7 @@ async def jimeng_login_start():
     exe = jimeng_cli_executable()
     if not exe:
         raise HTTPException(status_code=400, detail="未找到 dreamina CLI")
-    JIMENG_LOGIN_SESSION.update({"proc": None, "stdout": "", "stderr": "", "started_at": time.time()})
+    JIMENG_LOGIN_SESSION.update({"proc": None, "stdout": "", "stderr": "", "device_code": "", "started_at": time.time()})
     args = ["login", "--headless"]
     command = jimeng_command(args, exe)
     try:
@@ -13126,7 +13136,7 @@ async def jimeng_login_start():
     text = jimeng_login_text()
     if proc.returncode not in (None, 0) and ("unknown" in text.lower() or "no such option" in text.lower()):
         # 旧版 CLI 可能没有 --headless，退回 debug 输出。
-        JIMENG_LOGIN_SESSION.update({"proc": None, "stdout": "", "stderr": "", "started_at": time.time()})
+        JIMENG_LOGIN_SESSION.update({"proc": None, "stdout": "", "stderr": "", "device_code": "", "started_at": time.time()})
         proc = await asyncio.create_subprocess_exec(
             *jimeng_command(["login", "--debug"], exe),
             cwd=BASE_DIR,
@@ -13137,22 +13147,55 @@ async def jimeng_login_start():
         asyncio.create_task(jimeng_login_reader(proc))
         await asyncio.sleep(2)
         text = jimeng_login_text()
+    device_code = jimeng_login_device_code(text)
+    JIMENG_LOGIN_SESSION["device_code"] = device_code
+    if getattr(proc, "returncode", None) is not None:
+        # --headless intentionally exits after printing the device-flow material.
+        # Keep the device code so the status endpoint can continue checklogin polling.
+        JIMENG_LOGIN_SESSION["proc"] = None
+    proc = JIMENG_LOGIN_SESSION.get("proc")
     return {
         "success": True,
-        "running": JIMENG_LOGIN_SESSION.get("proc") is not None and JIMENG_LOGIN_SESSION["proc"].returncode is None,
+        "running": (proc is not None and proc.returncode is None) or bool(device_code),
         "text": text,
         "qr_url": jimeng_login_qr_from_text(text),
         "started_at": JIMENG_LOGIN_SESSION.get("started_at") or 0,
+        "expires_at": (JIMENG_LOGIN_SESSION.get("started_at") or 0) + JIMENG_LOGIN_TIMEOUT_SECONDS,
     }
 
 @app.get("/api/jimeng/login/status")
 async def jimeng_login_status():
     proc = JIMENG_LOGIN_SESSION.get("proc")
     text = jimeng_login_text()
-    running = proc is not None and getattr(proc, "returncode", None) is None
+    proc_running = proc is not None and getattr(proc, "returncode", None) is None
+    device_code = str(JIMENG_LOGIN_SESSION.get("device_code") or "").strip()
+    expired = jimeng_login_session_expired()
+    running = proc_running or (bool(device_code) and not expired)
     logged_in = False
     credit_raw = None
-    if not running:
+    if device_code and not expired:
+        try:
+            await run_jimeng_cli(
+                ["login", "checklogin", f"--device_code={device_code}", "--poll=0"],
+                timeout=20,
+            )
+            # checklogin exits successfully only after the browser authorization
+            # is complete. Confirm the usable login state and refresh the UI then.
+            logged_in = True
+            JIMENG_LOGIN_SESSION["device_code"] = ""
+            try:
+                credit_raw = await run_jimeng_cli(["user_credit"], timeout=20)
+            except HTTPException:
+                credit_raw = None
+            running = proc_running
+        except HTTPException:
+            # A non-zero checklogin result normally means the user has not
+            # finished authorizing yet. Keep the device flow alive until timeout.
+            running = True
+    elif expired:
+        JIMENG_LOGIN_SESSION["device_code"] = ""
+        running = proc_running
+    if not logged_in and not running:
         try:
             credit_raw = await run_jimeng_cli(["user_credit"], timeout=20)
             logged_in = True
