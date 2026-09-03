@@ -6607,6 +6607,7 @@ async def generate_jimeng_provider_image(prompt, size, model, reference_images=N
                 "image2image",
                 f"--images={','.join(image_paths)}",
                 f"--prompt={prompt}",
+                f"--ratio={jimeng_ratio_from_size(size)}",
                 f"--resolution_type={jimeng_image_resolution(model, size, 'image2image')}",
                 f"--poll={jimeng_poll_seconds()}",
             ]
