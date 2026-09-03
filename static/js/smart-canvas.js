@@ -8184,6 +8184,7 @@ function smartNodeToolbarHtml(node){
         {key:'mask', icon:'brush', label:'遮罩', enabled:canEditImage},
         {key:'brush', icon:'paintbrush', label:'画笔', enabled:canEditImage},
         {key:'grid', icon:'grid-3x3', label:gridLabel, enabled:canEditImage},
+        {key:'angle', icon:'camera', label:'角度控制', enabled:canEditImage},
         ...(jimengImageProviderId() ? [{key:'upscale', icon:'maximize-2', label:tr('smart.jimengUpscaleAction'), enabled:canEditImage}] : []),
         {key:'download', icon:'download', label:'下载', enabled:true}
     ];
@@ -8237,7 +8238,7 @@ function runSmartNodeToolbarAction(nodeId, action){
         runJimengUpscale(node, index);
         return;
     }
-    const modeMap = {crop:'crop', outpaint:'outpaint', mask:'mask', brush:'brush', grid:'grid'};
+    const modeMap = {crop:'crop', outpaint:'outpaint', mask:'mask', brush:'brush', grid:'grid', angle:'angle'};
     openImageEditor(nodeId, index);
     setImageEditMode(modeMap[action] || 'preview', true);
     if(action === 'grid' && canGridJoinCurrentNode()){
@@ -10259,6 +10260,94 @@ function currentEditImage(){
     const index = Number(cropState?.imageIndex || 0);
     return {node, index, image:imageForDisplay(node?.images?.[index])};
 }
+function anglePromptFromControls(){
+    const horizontal = Number(document.getElementById('angleHorizontal')?.value || 0);
+    const vertical = Number(document.getElementById('angleVertical')?.value || 0);
+    const distance = Number(document.getElementById('angleDistance')?.value || 4);
+    const parts = ['保持主体、服装、构图和光线一致'];
+    if(horizontal > 0) parts.push(`从右侧${Math.abs(horizontal)}度视角`);
+    else if(horizontal < 0) parts.push(`从左侧${Math.abs(horizontal)}度视角`);
+    if(vertical > 0) parts.push(`从上方${Math.abs(vertical)}度俯视`);
+    else if(vertical < 0) parts.push(`从下方${Math.abs(vertical)}度仰视`);
+    if(distance < 3.5) parts.push('镜头靠近主体');
+    else if(distance > 4.5) parts.push('镜头远离主体');
+    return parts.join('，');
+}
+function syncAngleControls(){
+    const horizontal = document.getElementById('angleHorizontal');
+    const vertical = document.getElementById('angleVertical');
+    const distance = document.getElementById('angleDistance');
+    const hValue = document.getElementById('angleHorizontalValue');
+    const vValue = document.getElementById('angleVerticalValue');
+    const dValue = document.getElementById('angleDistanceValue');
+    if(hValue) hValue.textContent = `${Number(horizontal?.value || 0)}°`;
+    if(vValue) vValue.textContent = `${Number(vertical?.value || 0)}°`;
+    if(dValue) dValue.textContent = Number(distance?.value || 4).toFixed(1);
+    const prompt = document.getElementById('anglePromptInput');
+    if(prompt && (!prompt.value.trim() || prompt.dataset.auto === '1')){
+        prompt.value = anglePromptFromControls();
+        prompt.dataset.auto = '1';
+    }
+}
+function resetAngleControls(){
+    [['angleHorizontal', '0'], ['angleVertical', '0'], ['angleDistance', '4']].forEach(([id, value]) => {
+        const input = document.getElementById(id);
+        if(input) input.value = value;
+    });
+    const prompt = document.getElementById('anglePromptInput');
+    if(prompt) { prompt.value = ''; prompt.dataset.auto = '1'; }
+    syncAngleControls();
+}
+async function applyImageAngle(){
+    const editing = currentEditImage();
+    const sourceNode = editing.node;
+    const sourceImage = editing.image;
+    if(!sourceNode || !sourceImage?.url){ toast('没有可进行角度控制的图片'); return; }
+    const promptInput = document.getElementById('anglePromptInput');
+    const prompt = String(promptInput?.value || anglePromptFromControls()).trim();
+    if(!prompt) { toast('请输入角度控制要求'); return; }
+    const sourceNodeId = sourceNode.id;
+    const rect = nodeRect(sourceNode);
+    const target = createImageNodeAt({x:rect.x + rect.width + 240, y:rect.y + rect.height / 2}, [], {select:true, skipUndo:true});
+    target.title = '角度控制';
+    target.runStartedAt = nowMs();
+    target.pending = 1;
+    target.running = true;
+    render();
+    toast('正在生成新角度…');
+    try {
+        const response = await fetch('/api/angle/generate', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+                prompt,
+                api_key:localStorage.getItem('modelscope_api_token') || '',
+                model:'Qwen/Qwen-Image-Edit-2511',
+                type:'angle',
+                image_urls:[sourceImage.url],
+                client_id:typeof smartClientId === 'string' ? smartClientId : null
+            })
+        });
+        const data = await response.json().catch(() => ({}));
+        if(!response.ok) throw new Error(data.detail || data.message || '角度控制生成失败');
+        if(!data.url) throw new Error(data.message || '角度控制任务未返回图片');
+        const live = liveSmartNode(target) || target;
+        live.images = [{url:data.url, name:`angle-${Date.now()}.png`, kind:'image', generatedResult:true}];
+        live.title = '角度控制输出';
+        markSmartNodeComplete(live);
+        addConnection(sourceNodeId, live.id);
+        closeImageEditor();
+        render();
+        scheduleSave();
+        toast('已生成新的角度图片');
+    } catch(error) {
+        const live = liveSmartNode(target) || target;
+        if(!(live.images || []).length) nodes = nodes.filter(item => item.id !== live.id);
+        toast(String(error.message || '角度控制生成失败').slice(0, 180));
+        render();
+        scheduleSave();
+    }
+}
 function cropImageDisplaySize(){
     const img = document.getElementById('cropImage');
     const clientW = Number(img?.clientWidth || 0);
@@ -10577,7 +10666,7 @@ function setImageEditMode(mode, userTouched=false){
     if(userTouched) imageEditModeTouched = true;
     const prev = imageEditMode;
     if(mode !== 'brush') removeEditTextInlineEditor(true);
-    imageEditMode = ['preview','crop','outpaint','mask','brush','resize','grid'].includes(mode) ? mode : 'preview';
+    imageEditMode = ['preview','crop','outpaint','mask','brush','resize','grid','angle'].includes(mode) ? mode : 'preview';
     const cropCanvasEl = document.getElementById('cropCanvas');
     const previewStageEl = document.getElementById('previewStage');
     const editStageEl = document.getElementById('imageEditStage');
@@ -10608,6 +10697,7 @@ function setImageEditMode(mode, userTouched=false){
     cropCanvasEl.classList.toggle('resize-mode', imageEditMode === 'resize');
     cropCanvasEl.classList.toggle('grid-mode', imageEditMode === 'grid');
     cropCanvasEl.classList.toggle('outpaint-mode', imageEditMode === 'outpaint');
+    cropCanvasEl.classList.toggle('angle-mode', imageEditMode === 'angle');
     syncGridCustomCursor();
     document.querySelectorAll('[data-image-edit-mode]').forEach(btn => btn.classList.toggle('active', btn.dataset.imageEditMode === imageEditMode));
     document.getElementById('imagePreviewTools').classList.toggle('active', isPreview && !isVideoPreview);
@@ -10616,6 +10706,7 @@ function setImageEditMode(mode, userTouched=false){
     document.getElementById('imageBrushTools').classList.toggle('active', imageEditMode === 'brush');
     document.getElementById('imageResizeTools')?.classList.toggle('active', imageEditMode === 'resize');
     document.getElementById('imageGridTools').classList.toggle('active', imageEditMode === 'grid');
+    document.getElementById('imageAngleTools')?.classList.toggle('active', imageEditMode === 'angle');
     if(imageEditMode === 'grid' && gridOperationMode === 'join' && !canGridJoinCurrentNode()) gridOperationMode = 'split';
     syncGridOperationControls();
     syncGridGapValue();
@@ -10638,6 +10729,11 @@ function setImageEditMode(mode, userTouched=false){
             document.getElementById('imageEditTitle').textContent = '缩放图片';
             document.getElementById('imageEditSub').textContent = '选择缩小倍数，应用会替换当前原图';
             applyBtn.innerHTML = `<i data-lucide="minimize-2" class="w-4 h-4"></i><span>应用缩放</span>`;
+        } else if(imageEditMode === 'angle'){
+            document.getElementById('imageEditTitle').textContent = '角度控制';
+            document.getElementById('imageEditSub').textContent = '调整水平、垂直视角和距离，生成一张新的关联图片';
+            applyBtn.innerHTML = `<i data-lucide="camera" class="w-4 h-4"></i><span>生成新角度</span>`;
+            syncAngleControls();
         } else {
             const icon = imageEditMode === 'crop' ? 'crop' : imageEditMode === 'outpaint' ? 'expand' : imageEditMode === 'mask' ? 'brush' : imageEditMode === 'brush' ? 'paintbrush' : 'grid-3x3';
             const labelKey = imageEditMode === 'crop' ? 'canvas.applyCrop' : imageEditMode === 'outpaint' ? 'canvas.applyOutpaint' : imageEditMode === 'mask' ? 'canvas.applyMask' : imageEditMode === 'brush' ? 'canvas.applyBrush' : 'canvas.applyGrid';
@@ -10662,7 +10758,7 @@ function setImageEditMode(mode, userTouched=false){
     }
     resizeEditDrawCanvas();
     if(imageEditMode === 'grid') refreshGridSplitPreview();
-    else if(imageEditMode === 'crop' || imageEditMode === 'resize' || imageEditMode === 'outpaint' || prev === 'grid') clearEditDrawing(true);
+    else if(imageEditMode === 'crop' || imageEditMode === 'resize' || imageEditMode === 'outpaint' || imageEditMode === 'angle' || prev === 'grid') clearEditDrawing(true);
     syncEditDrawingHistoryButtons();
     syncBrushToolButtons();
     syncTextToolState(true);
@@ -12392,6 +12488,7 @@ function openImageEditor(nodeId, imageIndex=0){
     gridCustomMode = false; gridCustomLines = []; gridCustomHistory = []; gridCustomDrag = null; gridCustomOrientation = 'h';
     gridOperationMode = 'split'; gridJoinLayout = null; gridJoinDrag = null; gridJoinImageCache = new Map(); gridJoinUserMoved = false; gridJoinGroupId = '';
     imageEditZoom = 1.0; imageEditBaseW = 0; imageEditBaseH = 0; imageResizeScale = 0.5; imageEditModeTouched = false;
+    resetAngleControls();
     cropAspectPreset = 'free'; cropAspectRatio = null; syncCropRatioButtons();
     editTextItems = []; editTextSelectedId = ''; editTextDrag = null; editTextDirty = false;
     const toggle = document.getElementById('gridCustomToggle');
@@ -12498,7 +12595,7 @@ function closeImageEditor(){
     previewPanDrag = null; previewCompareDrag = false; imageEditPanDrag = null; resetPreviewTransform();
     document.getElementById('imageEditStage')?.classList.remove('overflow-x', 'overflow-y', 'preview-mode');
     const cropCanvasEl = document.getElementById('cropCanvas');
-    cropCanvasEl?.classList.remove('grid-custom-h', 'grid-custom-v', 'outpaint-mode', 'outpaint-warning', 'dragging-image', 'text-mode', 'resize-mode');
+    cropCanvasEl?.classList.remove('grid-custom-h', 'grid-custom-v', 'outpaint-mode', 'outpaint-warning', 'dragging-image', 'text-mode', 'resize-mode', 'angle-mode');
     cropCanvasEl?.classList.remove('grid-join-mode');
     document.getElementById('cropImage')?.classList.remove('grid-join-hidden');
     const joinCanvas = document.getElementById('gridJoinCanvas');
@@ -12880,6 +12977,7 @@ async function applyImageResize(){
 }
 function applyImageEdit(){
     if(imageEditMode === 'preview') return;
+    if(imageEditMode === 'angle') return applyImageAngle();
     if(imageEditMode === 'outpaint') return applyImageOutpaint();
     if(imageEditMode === 'mask') return applyImageMask();
     if(imageEditMode === 'brush') return applyImageBrush();
@@ -18708,6 +18806,12 @@ document.querySelectorAll('[data-image-edit-mode]').forEach(btn => {
         event.stopPropagation();
         setImageEditMode(btn.dataset.imageEditMode || 'crop', true);
     });
+});
+['angleHorizontal', 'angleVertical', 'angleDistance'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', syncAngleControls);
+});
+document.getElementById('anglePromptInput')?.addEventListener('input', event => {
+    event.target.dataset.auto = '0';
 });
 imageEditModal.addEventListener('pointerdown', event => {
     event.stopPropagation();

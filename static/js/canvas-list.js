@@ -472,52 +472,16 @@ function openCanvas(c){
 }
 
 /* ===== Card create flow ===== */
-let createCardEl = null;
-let createKind = 'classic';
-function closeCreateCard(){ createCardEl?.remove(); createCardEl = null; }
+function closeCreateCard(){ /* 新建画布现在直接创建智能画布，保留关闭钩子兼容旧事件 */ }
 function openCreateCard(worldPt){
-    closeCreateCard();
     closeCardMenu();
-    createKind = 'classic';
-    const el = document.createElement('div');
-    el.className = 'ws-create-card';
-    el.style.left = worldPt.x + 'px';
-    el.style.top = worldPt.y + 'px';
-    el.innerHTML = `
-        <div class="ws-create-title">${L('新建画布','New canvas')}</div>
-        <input class="ws-create-input" type="text" maxlength="80" placeholder="${L('画布名称（可留空）','Canvas name (optional)')}">
-        <div class="ws-create-toggle">
-            <button class="ws-create-toggle-btn active" type="button" data-kind="classic">${L('普通画布','Classic')}</button>
-            <button class="ws-create-toggle-btn" type="button" data-kind="smart">${L('智能画布','Smart')}</button>
-        </div>
-        <div class="ws-create-actions">
-            <button class="ws-create-confirm" type="button">${L('创建','Create')}</button>
-            <button class="ws-create-cancel" type="button">${L('取消','Cancel')}</button>
-        </div>`;
-    boardWorld.appendChild(el);
-    createCardEl = el;
-    el.addEventListener('mousedown', e => e.stopPropagation());
-    const input = el.querySelector('.ws-create-input');
-    input.focus();
-    el.querySelectorAll('.ws-create-toggle-btn').forEach(btn => {
-        btn.onclick = () => {
-            createKind = btn.dataset.kind;
-            el.querySelectorAll('.ws-create-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
-        };
-    });
-    const confirm = () => createCanvasOnBoard(input.value.trim(), createKind, worldPt);
-    el.querySelector('.ws-create-confirm').onclick = confirm;
-    el.querySelector('.ws-create-cancel').onclick = closeCreateCard;
-    input.onkeydown = e => {
-        e.stopPropagation();
-        if(e.key === 'Enter'){ e.preventDefault(); confirm(); }
-        if(e.key === 'Escape'){ e.preventDefault(); closeCreateCard(); }
-    };
+    // 新建入口统一创建智能画布，避免再让用户在普通/智能之间选择。
+    createCanvasOnBoard('', 'smart', worldPt);
 }
 
 async function createCanvasOnBoard(title, kind, worldPt){
-    const isSmart = kind === 'smart';
-    const base = isSmart ? L('智能画布','Smart canvas') : L('画布','Canvas');
+    const isSmart = true;
+    const base = L('智能画布','Smart canvas');
     const name = title || `${base} ${new Date().toLocaleTimeString(langIsEn() ? 'en-US' : 'zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
     closeCreateCard();
     try {

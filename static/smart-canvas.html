@@ -264,6 +264,7 @@
                         <button type="button" data-image-edit-mode="brush"><i data-lucide="paintbrush" class="w-3.5 h-3.5"></i><span data-i18n="canvas.modeBrush">画笔</span></button>
                         <button type="button" data-image-edit-mode="resize"><i data-lucide="minimize-2" class="w-3.5 h-3.5"></i><span>缩放</span></button>
                         <button type="button" data-image-edit-mode="grid"><i data-lucide="grid-3x3" class="w-3.5 h-3.5"></i><span data-i18n="canvas.modeGrid">宫格切分</span></button>
+                        <button type="button" data-image-edit-mode="angle"><i data-lucide="camera" class="w-3.5 h-3.5"></i><span>角度控制</span></button>
                     </div>
                     <button class="preview-icon-btn" type="button" onclick="closeImageEditor()" title="关闭" data-i18n-title="common.close"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
@@ -428,6 +429,12 @@
                             <button id="compareToggleBtn" class="compare-toggle" type="button" onclick="togglePreviewCompare()" style="display:none"><i data-lucide="columns-2" class="w-4 h-4"></i><span data-i18n="smart.compareSource">对比原图</span></button>
                         </div>
                     </div>
+                </div>
+                <div id="imageAngleTools" class="image-edit-tools image-angle-tools">
+                    <label><span>水平</span><input id="angleHorizontal" type="range" min="-90" max="90" step="1" value="0"><output id="angleHorizontalValue">0°</output></label>
+                    <label><span>垂直</span><input id="angleVertical" type="range" min="-90" max="90" step="1" value="0"><output id="angleVerticalValue">0°</output></label>
+                    <label><span>距离</span><input id="angleDistance" type="range" min="0.1" max="8" step="0.1" value="4"><output id="angleDistanceValue">4.0</output></label>
+                    <input id="anglePromptInput" class="angle-prompt-input" type="text" placeholder="可补充角度控制要求，例如：保持主体和光线不变">
                 </div>
                 <div class="image-edit-actions">
                     <span id="imageEditZoomLabel" style="color:#94a3b8;font-size:11px;font-weight:800;padding:0 4px;margin-right:auto;cursor:pointer;user-select:none" title="双击重置缩放" ondblclick="resetImageEditZoom()">100%</span>

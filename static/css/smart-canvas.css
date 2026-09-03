@@ -1461,6 +1461,9 @@ input[type=range].smart-range::-webkit-slider-thumb { -webkit-appearance:none; w
 .image-edit-tools input[type="range"]::-moz-range-track { height:4px; border-radius:999px; background:#dbe3ee; }
 .image-edit-tools input[type="range"]::-moz-range-thumb { width:14px; height:14px; border-radius:999px; background:var(--strong); border:2px solid var(--card); box-shadow:0 1px 4px rgba(15,23,42,.22); cursor:pointer; }
 .image-edit-tools input[type="number"] { width:64px; height:30px; border:1px solid var(--line); border-radius:9px; background:var(--card); color:var(--text); padding:0 8px; font-size:12px; font-weight:800; outline:none; }
+.image-angle-tools { gap:12px; }
+.image-angle-tools output { min-width:36px; color:var(--text); font-size:11px; font-weight:850; }
+.image-angle-tools .angle-prompt-input { flex:1 1 240px; min-width:180px; height:30px; border:1px solid var(--line); border-radius:9px; background:var(--card); color:var(--text); padding:0 10px; font-size:11px; outline:none; }
 .image-edit-tools input[type="color"] { width:30px; height:28px; padding:0; border:1px solid var(--line); border-radius:8px; background:var(--card); }
 .grid-gap-control { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11px; font-weight:800; min-width:250px; }
 .grid-gap-control input[type="range"] { width:160px; }
@@ -1500,7 +1503,7 @@ input[type=range].smart-range::-webkit-slider-thumb { -webkit-appearance:none; w
 .crop-canvas.text-mode { cursor:text; }
 .crop-canvas.text-mode .edit-draw-canvas { pointer-events:none; }
 .crop-canvas.text-mode .edit-text-canvas { pointer-events:auto; }
-.crop-canvas.mask-mode .crop-box,.crop-canvas.brush-mode .crop-box,.crop-canvas.resize-mode .crop-box,.crop-canvas.grid-mode .crop-box,.crop-canvas.outpaint-mode .crop-box { display:none; }
+.crop-canvas.mask-mode .crop-box,.crop-canvas.brush-mode .crop-box,.crop-canvas.resize-mode .crop-box,.crop-canvas.grid-mode .crop-box,.crop-canvas.outpaint-mode .crop-box,.crop-canvas.angle-mode .crop-box { display:none; }
 .crop-canvas.grid-custom-h .edit-draw-canvas { pointer-events:auto; cursor:row-resize; }
 .crop-canvas.grid-custom-v .edit-draw-canvas { pointer-events:auto; cursor:col-resize; }
 .crop-box { position:absolute; left:10%; top:10%; width:80%; height:80%; border:2px solid #f8fafc; box-shadow:0 0 0 9999px rgba(15,23,42,.48), 0 12px 30px rgba(15,23,42,.2); border-radius:10px; cursor:move; pointer-events:auto; }
