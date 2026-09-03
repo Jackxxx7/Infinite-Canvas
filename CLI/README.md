@@ -37,5 +37,21 @@ The first run prompts you to sign in with your Google account or configure Gemin
 - Windows WSL Ubuntu helper: `CLI/windows/jimeng/install_wsl_ubuntu.bat`
 - macOS install/update: `CLI/macos/jimeng/install_jimeng_cli.command`
 - macOS login/check: `CLI/macos/jimeng/login_jimeng_cli.command`
+- Linux/VPS install/update: `CLI/linux/jimeng/install_jimeng_cli.sh`
+- Linux/VPS login/check: `CLI/linux/jimeng/login_jimeng_cli.sh`
+
+### Linux/VPS
+
+Run the install script as the same Linux user that will run Infinite Canvas:
+
+```bash
+cd /path/to/Infinite-Canvas
+bash CLI/linux/jimeng/install_jimeng_cli.sh
+bash CLI/linux/jimeng/login_jimeng_cli.sh
+```
+
+The login script prints a `verification_uri`; open it in a browser on your own computer. After browser authorization, press Enter in the VPS terminal. The script then runs `dreamina login checklogin` and finally `dreamina user_credit`.
+
+Important: `dreamina login --headless` only creates and prints the device-flow information. Browser authorization alone is not the final local CLI login until `checklogin` succeeds.
 
 Root-level scripts are kept as compatibility launchers.

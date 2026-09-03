@@ -306,6 +306,7 @@ LOAD_LOCK = Lock()
 RUNNINGHUB_WORKFLOW_LOCK = Lock()
 NEXT_TASK_ID = 1
 UPDATE_LOCK = Lock()
+JIMENG_LOGIN_SESSION_FILE = os.path.join(DATA_DIR, "jimeng_login_session.json")
 JIMENG_LOGIN_SESSION = {
     "proc": None,
     "stdout": "",
@@ -313,6 +314,50 @@ JIMENG_LOGIN_SESSION = {
     "device_code": "",
     "started_at": 0.0,
 }
+
+def persist_jimeng_login_session() -> None:
+    """Persist only the short-lived device code so VPS workers share one login flow."""
+    device_code = str(JIMENG_LOGIN_SESSION.get("device_code") or "").strip()
+    started_at = float(JIMENG_LOGIN_SESSION.get("started_at") or 0)
+    path = os.path.abspath(JIMENG_LOGIN_SESSION_FILE)
+    if not device_code or not started_at:
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except OSError:
+            pass
+        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    temp_path = f"{path}.tmp"
+    try:
+        with open(temp_path, "w", encoding="utf-8") as f:
+            json.dump({"device_code": device_code, "started_at": started_at}, f)
+        try:
+            os.chmod(temp_path, 0o600)
+        except OSError:
+            pass
+        os.replace(temp_path, path)
+    finally:
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+
+def hydrate_jimeng_login_session() -> None:
+    """Load a pending device flow created by another worker/process."""
+    if str(JIMENG_LOGIN_SESSION.get("device_code") or "").strip():
+        return
+    try:
+        with open(JIMENG_LOGIN_SESSION_FILE, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        device_code = str(payload.get("device_code") or "").strip()
+        started_at = float(payload.get("started_at") or 0)
+        if device_code and started_at:
+            JIMENG_LOGIN_SESSION["device_code"] = device_code
+            JIMENG_LOGIN_SESSION["started_at"] = started_at
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return
 
 PROVIDER_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{2,40}$")
 SUPPORTED_PROVIDER_PROTOCOLS = {"openai", "apimart", "gemini", "gemini-cli", "volcengine", "runninghub", "jimeng", "codex"}
@@ -6122,6 +6167,7 @@ def jimeng_login_device_code(text):
     return match.group(1).strip() if match else ""
 
 def jimeng_login_session_expired():
+    hydrate_jimeng_login_session()
     started_at = float(JIMENG_LOGIN_SESSION.get("started_at") or 0)
     return not started_at or time.time() - started_at >= JIMENG_LOGIN_TIMEOUT_SECONDS
 
@@ -13120,6 +13166,7 @@ async def jimeng_login_start():
     if not exe:
         raise HTTPException(status_code=400, detail="未找到 dreamina CLI")
     JIMENG_LOGIN_SESSION.update({"proc": None, "stdout": "", "stderr": "", "device_code": "", "started_at": time.time()})
+    persist_jimeng_login_session()
     args = ["login", "--headless"]
     command = jimeng_command(args, exe)
     try:
@@ -13150,6 +13197,7 @@ async def jimeng_login_start():
         text = jimeng_login_text()
     device_code = jimeng_login_device_code(text)
     JIMENG_LOGIN_SESSION["device_code"] = device_code
+    persist_jimeng_login_session()
     if getattr(proc, "returncode", None) is not None:
         # --headless intentionally exits after printing the device-flow material.
         # Keep the device code so the status endpoint can continue checklogin polling.
@@ -13166,6 +13214,7 @@ async def jimeng_login_start():
 
 @app.get("/api/jimeng/login/status")
 async def jimeng_login_status():
+    hydrate_jimeng_login_session()
     proc = JIMENG_LOGIN_SESSION.get("proc")
     text = jimeng_login_text()
     proc_running = proc is not None and getattr(proc, "returncode", None) is None
@@ -13184,6 +13233,7 @@ async def jimeng_login_status():
             # is complete. Confirm the usable login state and refresh the UI then.
             logged_in = True
             JIMENG_LOGIN_SESSION["device_code"] = ""
+            persist_jimeng_login_session()
             try:
                 credit_raw = await run_jimeng_cli(["user_credit"], timeout=20)
             except HTTPException:
@@ -13195,6 +13245,7 @@ async def jimeng_login_status():
             running = True
     elif expired:
         JIMENG_LOGIN_SESSION["device_code"] = ""
+        persist_jimeng_login_session()
         running = proc_running
     if not logged_in and not running:
         try:

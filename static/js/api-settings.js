@@ -2663,6 +2663,7 @@ function renderJimengLoginBox(data){
             </button>
             <span id="jimengCopyStatus" class="jimeng-copy-status"></span>
         </div>
+        <div class="jimeng-login-hint">请在浏览器完成授权；授权成功后，本页面会自动确认登录态并刷新。不要同时在 SSH 终端另起一组登录流程。</div>
         <pre id="jimengLoginInfo">${escapeHtml(text || '等待 CLI 输出浏览器认证信息...')}</pre>`;
 }
 
@@ -2751,6 +2752,7 @@ async function pollJimengLogin(){
         } else {
             stopJimengLoginPolling();
             setJimengStatus('未登录', false);
+            if(jimengCredit && data.message) jimengCredit.textContent = data.message;
         }
     } catch(e){
         setJimengStatus('登录检测失败', false);

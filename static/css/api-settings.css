@@ -390,6 +390,7 @@ body.show-gemini-cli .jimeng-cli-panel:not([hidden]) { display:flex; }
 .jimeng-output[hidden] { display:none !important; }
 .jimeng-output pre { margin:0; max-height:260px; overflow:auto; color:var(--text); font:11px/1.45 ui-monospace,Menlo,Consolas,monospace; white-space:pre-wrap; word-break:break-word; }
 .jimeng-login-toolbar { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.jimeng-login-hint { margin-bottom:10px; color:var(--muted); font-size:11px; line-height:1.55; font-weight:700; }
 .jimeng-copy-status { color:var(--muted); font-size:11px; font-weight:800; }
 .jimeng-help-modal { max-width:860px; }
 .jimeng-help-toolbar { display:flex; gap:10px; align-items:center; padding:14px 20px; border-bottom:1px solid var(--line); }
