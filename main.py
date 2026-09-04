@@ -162,7 +162,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 GLOBAL_LOOP = None
-APP_VERSION = "2026.09.04.3"
+APP_VERSION = "2026.09.04.4"
 GITHUB_REPO_URL = "https://github.com/Jackxxx7/Infinite-Canvas"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/Jackxxx7/Infinite-Canvas/main/VERSION"
 GITHUB_TREE_URL = "https://api.github.com/repos/Jackxxx7/Infinite-Canvas/git/trees/main?recursive=1"
