@@ -160,7 +160,7 @@
             overflow: hidden;
         }
 
-        .sidebar:hover {
+        .sidebar.is-pinned {
             width: 220px;
             transition-delay: 0s;
         }
@@ -181,10 +181,10 @@
         }
 
         .logo-ring {
-            width: 36px;
-            height: 36px;
-            border: 2px solid var(--text);
-            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            border: 0;
+            border-radius: 50%;
             background: transparent;
             padding: 0;
             color: var(--text);
@@ -193,32 +193,33 @@
             justify-content: center;
             cursor: pointer;
             flex: 0 0 auto;
-            /* 仅保留 hover 真正会用到的属性过渡，避免 transition: all 因首屏属性补齐被意外触发 */
-            transition: transform 0.6s var(--fluid-ease) 0.5s, border-radius 0.6s var(--fluid-ease) 0.5s, border-color 0.3s, background-color .18s, box-shadow .2s;
+            transition: transform 0.6s var(--fluid-ease) 0.5s;
         }
 
         .x-logo-mark {
-            width: 27px;
-            height: 27px;
+            width: 32px;
+            height: 32px;
             color: currentColor;
             overflow: visible;
             transition: filter .2s ease, transform .2s ease;
         }
-        .x-logo-mark .x-logo-stroke { fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-        .x-logo-mark .x-logo-core { fill:none; stroke:#60a5fa; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+        .x-logo-mark .x-logo-stroke { fill:none; stroke:currentColor; stroke-width:3.6; stroke-linecap:butt; stroke-linejoin:miter; stroke-miterlimit:1; }
+        .x-logo-mark .x-logo-core { fill:none; stroke:#60a5fa; stroke-width:3.6; stroke-linecap:butt; stroke-linejoin:miter; stroke-miterlimit:1; }
         .logo-ring.is-busy .x-logo-mark { filter:drop-shadow(0 0 5px rgba(96,165,250,.75)); }
 
-        .sidebar:hover .logo-ring {
+        .sidebar.is-pinned .logo-ring {
             transform: rotate(90deg);
             border-radius: 50%;
             transition-delay: 0s;
+            background: transparent;
+            box-shadow: none;
         }
 
         .logo-ring:hover,
         .logo-ring:focus-visible {
-            background: var(--nav-hover-bg);
-            border-color: var(--text);
-            box-shadow: 0 0 0 4px rgba(148, 163, 184, .16), 0 10px 24px rgba(15, 23, 42, .08);
+            background: transparent;
+            border-color: transparent;
+            box-shadow: none;
             outline: none;
         }
 
@@ -232,7 +233,7 @@
             transition-delay: 0s;
         }
 
-        .sidebar:hover .logo-ring:active {
+        .sidebar.is-pinned .logo-ring:active {
             transform: rotate(90deg) scale(.94);
         }
 
@@ -256,7 +257,7 @@
             padding-left: 14px;
         }
 
-        .sidebar:hover .nav-item {
+        .sidebar.is-pinned .nav-item {
             width: 190px;
             transition-delay: 0s;
         }
@@ -286,7 +287,7 @@
             transition: opacity 0.3s 0.5s;
         }
 
-        .sidebar:hover .nav-text {
+        .sidebar.is-pinned .nav-text {
             opacity: 1;
             transition-delay: 0.1s;
         }
@@ -310,7 +311,7 @@
             transition: width 0.3s var(--fluid-ease) 0.5s, background-color 0.2s, color 0.2s, border-color 0.2s;
         }
 
-        .sidebar:hover .nav-fold-toggle {
+        .sidebar.is-pinned .nav-fold-toggle {
             width: 190px;
             transition-delay: 0s;
         }
@@ -548,13 +549,13 @@
         .letter-d { transform: translateX(-8px); }
         .letter-x { transform: translateX(8px); }
 
-        .sidebar:hover .letter-d {
+        .sidebar.is-pinned .letter-d {
             transform: translateX(-120px);
             opacity: 0;
             transition-delay: 0s;
         }
 
-        .sidebar:hover .letter-x {
+        .sidebar.is-pinned .letter-x {
             transform: translateX(120px);
             opacity: 0;
             transition-delay: 0s;
@@ -570,7 +571,7 @@
             pointer-events: none;
         }
 
-        .sidebar:hover .author-content-wrap {
+        .sidebar.is-pinned .author-content-wrap {
             opacity: 1;
             transform: scale(1);
             transition-delay: 0.2s;
@@ -626,7 +627,7 @@
             position:relative;
         }
 
-        .sidebar:hover .side-pill {
+        .sidebar.is-pinned .side-pill {
             width: 170px;
             transition-delay: 0s;
         }
@@ -693,7 +694,6 @@
             overflow: hidden;
             transition: opacity 0.3s 0.5s, max-width 0.3s var(--fluid-ease) 0.5s, transform .22s var(--fluid-ease);
         }
-        .sidebar:hover .settings-fold-chevron,
         .sidebar.is-pinned .settings-fold-chevron {
             opacity: .72;
             max-width: 16px;
@@ -729,14 +729,14 @@
             overflow:hidden;
             transition: opacity 0.3s 0.5s, max-width 0.3s var(--fluid-ease) 0.5s;
         }
-        .sidebar:hover .side-pill-text {
+        .sidebar.is-pinned .side-pill-text {
             opacity:1;
             max-width:120px;
             transition-delay:.15s;
         }
         /* 折叠态去除 gap，避免图标被推偏 */
         .side-pill { gap:0; }
-        .sidebar:hover .side-pill { gap:8px; }
+        .sidebar.is-pinned .side-pill { gap:8px; }
 
         .project-version-badge {
             width:44px;
@@ -761,14 +761,14 @@
         .project-version-badge.checking { opacity:.6; animation:badge-pulse 1s ease-in-out infinite; }
         @keyframes badge-pulse { 0%,100%{opacity:.5;} 50%{opacity:1;} }
 
-        .sidebar:hover .project-version-badge {
+        .sidebar.is-pinned .project-version-badge {
             width:170px;
             transition-delay:0s;
         }
 
         .project-version-full { display:none; }
-        .sidebar:hover .project-version-compact { display:none; }
-        .sidebar:hover .project-version-full { display:inline; }
+        .sidebar.is-pinned .project-version-compact { display:none; }
+        .sidebar.is-pinned .project-version-full { display:inline; }
 
         .update-now-btn {
             display:none;
@@ -788,11 +788,11 @@
             transition:width 0.3s var(--fluid-ease) 0.5s, background-color .2s, color .2s, border-color .2s;
         }
         .update-now-btn.show { display:flex; }
-        .sidebar:hover .update-now-btn { width:170px; transition-delay:0s; }
+        .sidebar.is-pinned .update-now-btn { width:170px; transition-delay:0s; }
         .update-now-btn:hover { background:#16a34a; color:#fff; border-color:#16a34a; }
         .update-now-btn[disabled] { opacity:.7; cursor:wait; }
         .update-now-btn svg { display:none; width:14px; height:14px; flex:0 0 auto; }
-        .sidebar:hover .update-now-btn svg { display:block; }
+        .sidebar.is-pinned .update-now-btn svg { display:block; }
         .update-now-text {
             opacity:1;
             max-width:42px;
@@ -802,10 +802,10 @@
         }
         .update-action-prefix { display:none; }
         .update-version-full { display:none; }
-        .sidebar:hover .update-version-compact { display:none; }
-        .sidebar:hover .update-version-full { display:inline; }
-        .sidebar:hover .update-action-prefix { display:inline; }
-        .sidebar:hover .update-now-text { max-width:130px; transition-delay:.15s; }
+        .sidebar.is-pinned .update-version-compact { display:none; }
+        .sidebar.is-pinned .update-version-full { display:inline; }
+        .sidebar.is-pinned .update-action-prefix { display:inline; }
+        .sidebar.is-pinned .update-now-text { max-width:130px; transition-delay:.15s; }
         .update-now-btn.show + .project-version-badge { display:none; }
         html.theme-dark .update-now-btn,
         body.theme-dark .update-now-btn {
@@ -892,7 +892,9 @@
             .logo-ring {
                 width:32px;
                 height:32px;
-                border-radius:10px;
+                border-radius:50%;
+                border:0;
+                background:transparent;
                 margin-bottom:10px !important;
             }
             .nav-item {
@@ -1361,16 +1363,16 @@
             transform: rotate(90deg);
             border-radius: 50%;
             transition-delay: 0s;
-            background: var(--nav-hover-bg);
+            background: transparent;
             color: var(--text);
-            box-shadow: 0 0 0 4px rgba(148, 163, 184, .10);
+            box-shadow: none;
         }
         .sidebar.is-pinned .x-logo-mark {
             filter: drop-shadow(0 0 4px rgba(96,165,250,.45));
         }
         .sidebar.is-pinned .logo-ring:hover,
         .sidebar.is-pinned .logo-ring:focus-visible {
-            box-shadow: 0 0 0 5px rgba(148, 163, 184, .14);
+            box-shadow: none;
         }
         .sidebar.is-pinned .nav-item,
         .sidebar.is-pinned .nav-fold-toggle {
@@ -1429,61 +1431,64 @@
             transition-delay: .15s;
         }
 
-        .sidebar.is-collapsing:hover {
+        .sidebar.is-collapsing {
             width: 80px;
         }
-        .sidebar.is-collapsing:hover .logo-ring {
+        .sidebar.is-collapsing .logo-ring {
             transform: none;
-            border-radius: 12px;
+            border-radius: 50%;
             background: transparent;
+            border: 0;
+            box-shadow: none;
+            transition-delay: 0s;
         }
-        .sidebar.is-collapsing:hover .nav-item,
-        .sidebar.is-collapsing:hover .nav-fold-toggle {
+        .sidebar.is-collapsing .nav-item,
+        .sidebar.is-collapsing .nav-fold-toggle {
             width: 48px;
         }
-        .sidebar.is-collapsing:hover .nav-text {
+        .sidebar.is-collapsing .nav-text {
             opacity: 0;
         }
-        .sidebar.is-collapsing:hover .letter-d {
+        .sidebar.is-collapsing .letter-d {
             transform: translateX(-8px);
             opacity: 1;
         }
-        .sidebar.is-collapsing:hover .letter-x {
+        .sidebar.is-collapsing .letter-x {
             transform: translateX(8px);
             opacity: 1;
         }
-        .sidebar.is-collapsing:hover .author-content-wrap {
+        .sidebar.is-collapsing .author-content-wrap {
             opacity: 0;
             transform: scale(0.9);
             pointer-events: none;
         }
-        .sidebar.is-collapsing:hover .side-pill {
+        .sidebar.is-collapsing .side-pill {
             width: 44px;
             gap: 0;
         }
-        .sidebar.is-collapsing:hover .side-pill-text {
+        .sidebar.is-collapsing .side-pill-text {
             opacity: 0;
             max-width: 0;
         }
-        .sidebar.is-collapsing:hover .project-version-badge {
+        .sidebar.is-collapsing .project-version-badge {
             width: 44px;
         }
-        .sidebar.is-collapsing:hover .project-version-compact,
-        .sidebar.is-collapsing:hover .update-version-compact {
+        .sidebar.is-collapsing .project-version-compact,
+        .sidebar.is-collapsing .update-version-compact {
             display: inline;
         }
-        .sidebar.is-collapsing:hover .project-version-full,
-        .sidebar.is-collapsing:hover .update-version-full,
-        .sidebar.is-collapsing:hover .update-action-prefix {
+        .sidebar.is-collapsing .project-version-full,
+        .sidebar.is-collapsing .update-version-full,
+        .sidebar.is-collapsing .update-action-prefix {
             display: none;
         }
-        .sidebar.is-collapsing:hover .update-now-btn {
+        .sidebar.is-collapsing .update-now-btn {
             width: 56px;
         }
-        .sidebar.is-collapsing:hover .update-now-btn svg {
+        .sidebar.is-collapsing .update-now-btn svg {
             display: none;
         }
-        .sidebar.is-collapsing:hover .update-now-text {
+        .sidebar.is-collapsing .update-now-text {
             max-width: 42px;
         }
     </style>
@@ -1495,8 +1500,8 @@
         <aside class="sidebar" id="studioSidebar">
             <button class="logo-ring mb-12" id="sidebarLogoToggle" type="button" onclick="toggleSidebarPinned(event)" aria-pressed="false" title="固定导航栏">
                 <svg class="x-logo-mark" viewBox="0 0 40 40" aria-hidden="true">
-                    <path class="x-logo-stroke" d="M7 7 17 17M23 23 33 33M33 7 23 17M17 23 7 33"></path>
-                    <path class="x-logo-core" d="M17 17 23 23M23 17 17 23"></path>
+                    <path class="x-logo-stroke" d="M6 6L17 17M23 23L34 34M34 6L23 17M17 23L6 34"></path>
+                    <path class="x-logo-core" d="M16 16L24 24M24 16L16 24"></path>
                 </svg>
             </button>
 
