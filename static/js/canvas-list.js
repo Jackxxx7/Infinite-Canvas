@@ -63,6 +63,20 @@ const boardResetViewBtn = document.getElementById('boardResetView');
 const pasteCanvasBtn = document.getElementById('pasteCanvasBtn');
 const emptyCreateCanvasBtn = document.getElementById('emptyCreateCanvasBtn');
 const statusEl = document.getElementById('boardStatus');
+const projectPanelToggle = document.getElementById('projectPanelToggle');
+const projectPanelClose = document.getElementById('projectPanelClose');
+const projectPanelBackdrop = document.getElementById('projectPanelBackdrop');
+
+function setProjectPanelOpen(open){
+    const isOpen = Boolean(open);
+    document.body.classList.toggle('project-panel-open', isOpen);
+    projectPanelToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    projectPanelBackdrop?.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+}
+
+projectPanelToggle?.addEventListener('click', () => setProjectPanelOpen(true));
+projectPanelClose?.addEventListener('click', () => setProjectPanelOpen(false));
+projectPanelBackdrop?.addEventListener('click', () => setProjectPanelOpen(false));
 
 /* ===== State ===== */
 let projects = [];
@@ -262,6 +276,7 @@ function selectProject(pid){
     renderProjects();
     renderBoard();
     resetView();
+    setProjectPanelOpen(false);
 }
 
 function startProjectRename(pid, row){
@@ -989,6 +1004,7 @@ document.addEventListener('mousedown', e => {
 
 document.addEventListener('keydown', e => {
     if(e.key !== 'Escape') return;
+    setProjectPanelOpen(false);
     closeCardMenu();
     closeCreateCard();
     boardWorld.querySelectorAll('.ws-card.confirming-delete').forEach(el => el.classList.remove('confirming-delete'));

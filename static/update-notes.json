@@ -1,10 +1,10 @@
 {
-  "version": "2026.09.04.1",
-  "updated_at": "2026-09-04T03:35:00+08:00",
+  "version": "2026.09.04.2",
+  "updated_at": "2026-09-04T04:10:00+08:00",
   "items": [
     {
       "type": "feature",
-      "text": "修复 Linux/VPS 上即梦 CLI OAuth Device Flow 的最终登录确认流程，并修复更新按钮在 VPS 上使用错误启动脚本、端口和 Python 环境的问题。"
+      "text": "新增画布项目抽屉式项目栏，并统一圆形按钮与 SVG 图标的居中对齐。"
     }
   ]
 }

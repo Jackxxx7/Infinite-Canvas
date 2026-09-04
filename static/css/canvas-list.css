@@ -354,3 +354,92 @@ html[data-studio-scale="off"].studio-scale-managed .ws-paste-btn span {
         opacity:1;
     }
 }
+
+/* ===== Collapsible project drawer ===== */
+.workspace { display:block; }
+.ws-main { width:100%; height:100%; }
+.ws-project-panel-toggle {
+    position:absolute;
+    left:14px;
+    top:14px;
+    z-index:56;
+    width:42px;
+    height:42px;
+    padding:0;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--text);
+    background:var(--panel);
+    border:1px solid var(--line);
+    box-shadow:0 14px 34px var(--shadow);
+    backdrop-filter:blur(16px);
+    line-height:1;
+    transition:opacity .18s var(--ease), transform .18s var(--ease), background .14s var(--ease), border-color .14s var(--ease);
+}
+.ws-project-panel-toggle:hover { background:var(--soft); border-color:var(--line-2); transform:translateY(-1px); }
+.ws-project-panel-toggle i,
+.ws-project-panel-toggle svg,
+.ws-project-panel-close i,
+.ws-project-panel-close svg { display:block; flex:0 0 auto; width:17px; height:17px; line-height:0; }
+.ws-project-panel-backdrop {
+    position:absolute;
+    inset:0;
+    z-index:54;
+    background:rgba(15,23,42,.28);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s var(--ease);
+}
+.ws-sidebar {
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    z-index:55;
+    width:280px;
+    height:100%;
+    flex:none;
+    transform:translateX(calc(-100% - 16px));
+    transition:transform .22s var(--ease), box-shadow .22s var(--ease);
+    box-shadow:18px 0 48px transparent;
+}
+body.project-panel-open .ws-sidebar { transform:translateX(0); box-shadow:18px 0 48px var(--shadow-strong); }
+body.project-panel-open .ws-project-panel-backdrop { opacity:1; pointer-events:auto; }
+body.project-panel-open .ws-project-panel-toggle { opacity:0; pointer-events:none; transform:translateX(-8px); }
+.ws-side-head-actions { display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+.ws-project-panel-close {
+    width:32px;
+    height:32px;
+    padding:0;
+    border-radius:50%;
+    line-height:1;
+}
+.ws-side-add,
+.ws-mini-btn,
+.ws-proj-act,
+.ws-icon-btn,
+.ws-primary-btn,
+.ws-paste-btn,
+.ws-trash-entry { line-height:1; }
+.ws-side-add i,
+.ws-side-add svg,
+.ws-mini-btn i,
+.ws-mini-btn svg,
+.ws-proj-act i,
+.ws-proj-act svg,
+.ws-icon-btn i,
+.ws-icon-btn svg,
+.ws-primary-btn i,
+.ws-primary-btn svg,
+.ws-paste-btn i,
+.ws-paste-btn svg,
+.ws-trash-entry i,
+.ws-trash-entry svg { display:block; flex:0 0 auto; }
+
+@media (max-width:760px) {
+    .ws-sidebar { width:min(280px, calc(100vw - 24px)); max-height:none; border-right:1px solid var(--line); border-bottom:0; }
+    .ws-project-panel-toggle { left:12px; top:12px; width:40px; height:40px; }
+    .ws-topbar { padding-left:64px; }
+}
