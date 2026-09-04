@@ -1,0 +1,745 @@
+/*
+ * RunningHub-inspired UI reference layer.
+ *
+ * This file intentionally contains presentation-only rules. It does not
+ * change API calls, data structures, task state, or existing event handlers.
+ */
+:root {
+    --rh-canvas: #0b0d10;
+    --rh-canvas-soft: #111419;
+    --rh-surface: rgba(22, 25, 30, .92);
+    --rh-surface-solid: #171a20;
+    --rh-surface-hover: #20252d;
+    --rh-line: rgba(255, 255, 255, .105);
+    --rh-line-strong: rgba(255, 255, 255, .18);
+    --rh-text: #f4f6f8;
+    --rh-muted: #a3acb8;
+    --rh-faint: #687281;
+    --rh-lime: #c8f542;
+    --rh-lime-dark: #9dbb21;
+    --rh-pink: #ed42c4;
+    --rh-radius-sm: 10px;
+    --rh-radius-md: 14px;
+    --rh-radius-lg: 18px;
+    --rh-ease: cubic-bezier(.22, .8, .2, 1);
+}
+
+button, input, select, textarea { font-family: inherit; }
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--rh-lime) !important;
+    outline-offset: 2px;
+}
+
+/* ===== Main studio shell ===== */
+.app-shell {
+    gap: 12px;
+    background: #0d0f12 !important;
+}
+
+.app-shell > .sidebar {
+    width: 72px;
+    min-width: 72px;
+    height: calc(100vh - 28px);
+    margin: 14px 0 14px 14px;
+    padding: 24px 0 18px;
+    border: 1px solid var(--rh-line);
+    border-radius: var(--rh-radius-lg);
+    background: rgba(17, 19, 23, .96) !important;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .22);
+}
+
+.app-shell > .sidebar.is-pinned { width: 224px; }
+.app-shell > .sidebar .logo-ring { margin-bottom: 28px; }
+.app-shell > .sidebar .nav-item {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+    margin: 5px 0;
+    padding-left: 12px;
+    border-radius: var(--rh-radius-md);
+    color: var(--rh-muted);
+    transition: width .25s var(--rh-ease), background .16s ease, color .16s ease;
+}
+
+.app-shell > .sidebar.is-pinned .nav-item { width: 192px; }
+.app-shell > .sidebar .nav-item:hover,
+.app-shell > .sidebar .side-pill:hover {
+    color: var(--rh-text) !important;
+    background: var(--rh-surface-hover) !important;
+}
+
+.app-shell > .sidebar .nav-item.active,
+.app-shell > .sidebar .side-pill.active {
+    color: #11150b !important;
+    background: var(--rh-lime) !important;
+    box-shadow: 0 8px 24px rgba(200, 245, 66, .18);
+}
+
+.app-shell > .sidebar .nav-item.active .nav-text,
+.app-shell > .sidebar .side-pill.active .side-pill-text { color: inherit !important; }
+.app-shell > .sidebar .side-actions { gap: 7px; margin-bottom: 4px; }
+.app-shell > .sidebar .side-pill {
+    width: 42px;
+    height: 34px;
+    border: 1px solid var(--rh-line);
+    border-radius: var(--rh-radius-sm);
+    color: var(--rh-muted);
+    background: rgba(255, 255, 255, .025);
+    transition: width .25s var(--rh-ease), background .16s ease, color .16s ease, border-color .16s ease;
+}
+
+.app-shell > .sidebar.is-pinned .side-pill { width: 192px; }
+.app-shell > .sidebar .side-pill > svg,
+.app-shell > .sidebar .nav-item > svg { flex: 0 0 auto; }
+.app-shell > .sidebar .update-now-btn {
+    border-radius: var(--rh-radius-sm);
+    background: var(--rh-lime) !important;
+    color: #11150b !important;
+    box-shadow: 0 8px 22px rgba(200, 245, 66, .16);
+}
+
+.app-shell > .stage {
+    margin: 14px 14px 14px 0;
+    border: 1px solid var(--rh-line);
+    border-radius: var(--rh-radius-lg);
+    background: var(--rh-canvas) !important;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .18);
+}
+
+.app-shell > .stage.canvas-stage-active {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+}
+
+/* ===== Canvas project board ===== */
+#workspace {
+    background: var(--rh-canvas) !important;
+    color: var(--rh-text);
+}
+#workspace .ws-sidebar {
+    flex-basis: 252px;
+    width: 252px;
+    margin: 14px 0 14px 14px;
+    border: 1px solid var(--rh-line);
+    border-radius: var(--rh-radius-lg);
+    background: var(--rh-surface) !important;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .2);
+}
+#workspace .ws-main { margin: 14px; }
+#workspace .ws-topbar,
+#workspace .ws-trash-head {
+    min-height: 56px;
+    border: 1px solid var(--rh-line);
+    border-radius: var(--rh-radius-md);
+    background: var(--rh-surface) !important;
+    color: var(--rh-text);
+}
+#workspace .ws-topbar { margin-bottom: 10px; }
+#workspace .ws-board {
+    border: 1px solid var(--rh-line);
+    border-radius: var(--rh-radius-lg);
+    background-color: var(--rh-canvas) !important;
+    background-image:
+        linear-gradient(rgba(255,255,255,.026) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.026) 1px, transparent 1px),
+        radial-gradient(rgba(255,255,255,.13) 1px, transparent 1px) !important;
+    background-size: 120px 120px, 120px 120px, 24px 24px;
+}
+#workspace .ws-side-title,
+#workspace .ws-board-name,
+#workspace .ws-board-empty-text { color: var(--rh-text); }
+#workspace .ws-project-row:hover,
+#workspace .ws-trash-entry:hover { background: var(--rh-surface-hover); }
+#workspace .ws-project-row.active {
+    background: var(--rh-lime) !important;
+    color: #11150b;
+    box-shadow: 0 8px 22px rgba(200,245,66,.13);
+}
+#workspace .ws-project-row.active .ws-project-name,
+#workspace .ws-project-row.active .ws-project-icon,
+#workspace .ws-project-row.active .ws-project-count { color: #11150b !important; }
+#workspace .ws-primary-btn,
+#workspace .ws-create-confirm {
+    background: var(--rh-lime) !important;
+    color: #11150b !important;
+    border-color: var(--rh-lime) !important;
+}
+#workspace .ws-icon-btn,
+#workspace .ws-side-add,
+#workspace .ws-mini-btn {
+    border-color: var(--rh-line);
+    border-radius: var(--rh-radius-sm);
+    background: rgba(255,255,255,.035);
+    color: var(--rh-muted);
+}
+#workspace .ws-icon-btn:hover,
+#workspace .ws-side-add:hover,
+#workspace .ws-mini-btn:hover { background: var(--rh-surface-hover); color: var(--rh-text); }
+#workspace .ws-card,
+#workspace .ws-card-pop,
+#workspace .ws-create-card,
+#workspace .ws-trash-panel {
+    border-color: var(--rh-line-strong);
+    border-radius: var(--rh-radius-md);
+    background: var(--rh-surface-solid);
+    color: var(--rh-text);
+}
+#workspace .ws-card:hover { border-color: rgba(200,245,66,.45); }
+
+/* ===== Infinite canvas / smart canvas working surface ===== */
+.shell:has(.board),
+.shell:has(.world) { background: var(--rh-canvas); }
+.shell:has(.board) .topbar,
+.shell:has(.world) .topbar { top: 16px; left: 16px; right: 16px; }
+.shell:has(.board) .panel,
+.shell:has(.world) .panel {
+    border-color: var(--rh-line);
+    border-radius: var(--rh-radius-md);
+    background: var(--rh-surface) !important;
+    box-shadow: 0 18px 42px rgba(0,0,0,.28);
+}
+.shell:has(.board) .tool-btn,
+.shell:has(.world) .tool-btn {
+    min-height: 36px;
+    border-radius: var(--rh-radius-sm);
+    border-color: var(--rh-line);
+    background: rgba(255,255,255,.035);
+    color: var(--rh-muted);
+}
+.shell:has(.board) .tool-btn:hover,
+.shell:has(.world) .tool-btn:hover {
+    background: var(--rh-surface-hover);
+    color: var(--rh-text);
+    border-color: var(--rh-line-strong);
+}
+.shell:has(.board) .tool-btn.primary,
+.shell:has(.world) .tool-btn.primary,
+.shell:has(.board) .run-btn,
+.shell:has(.world) .run-btn,
+.shell:has(.board) .gen-btn {
+    background: var(--rh-lime) !important;
+    color: #11150b !important;
+    border-color: var(--rh-lime) !important;
+}
+.shell:has(.board) .board,
+.shell:has(.world) .world {
+    background-color: var(--rh-canvas);
+    background-image:
+        linear-gradient(rgba(255,255,255,.026) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.026) 1px, transparent 1px),
+        radial-gradient(rgba(255,255,255,.13) 1px, transparent 1px);
+    background-size: 120px 120px, 120px 120px, 24px 24px;
+}
+.shell:has(.board) .node,
+.shell:has(.world) .node,
+.shell:has(.world) .composer-card,
+.shell:has(.world) .create-menu,
+.shell:has(.world) .asset-panel,
+.shell:has(.board) .canvas-asset-panel,
+.shell:has(.board) .workflow-transfer-panel {
+    border-color: var(--rh-line-strong);
+    border-radius: var(--rh-radius-md);
+    background: var(--rh-surface-solid);
+    color: var(--rh-text);
+    box-shadow: 0 20px 52px rgba(0,0,0,.34);
+}
+.shell:has(.board) .canvas-asset-panel,
+.shell:has(.board) .workflow-transfer-panel,
+.shell:has(.world) .asset-panel { backdrop-filter: blur(18px); }
+
+/* RunningHub-style canvas rail: keep the existing toolbar handlers, but make
+ * the control surface a compact left rail. Expanding it reveals labels. */
+#shell:has(#board) #quickToolbar {
+    position: absolute !important;
+    top: 84px;
+    left: 16px;
+    right: auto;
+    z-index: 50;
+    width: 54px;
+    max-width: 54px;
+    max-height: calc(100vh - 112px);
+    margin: 0;
+    padding: 6px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+#shell:has(#board) #quickToolbar:not(.collapsed) {
+    width: 178px;
+    max-width: 178px;
+}
+#shell:has(#board) #quickToolbar .toolbar-toggle {
+    order: -1;
+    width: 40px;
+    min-width: 40px;
+    height: 36px;
+    padding: 0;
+    border-radius: 11px;
+}
+#shell:has(#board) #quickToolbar .toolbar-items {
+    display: flex !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+#shell:has(#board) #quickToolbar .toolbar-items::-webkit-scrollbar { display: none; }
+#shell:has(#board) #quickToolbar .toolbar-items .tool-btn,
+#shell:has(#board) #quickToolbar .toolbar-fixed .tool-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    border-radius: 11px;
+    flex: 0 0 auto;
+}
+#shell:has(#board) #quickToolbar .toolbar-items .tool-btn span,
+#shell:has(#board) #quickToolbar .toolbar-fixed .tool-btn span {
+    display: none;
+}
+#shell:has(#board) #quickToolbar:not(.collapsed) .toolbar-items .tool-btn {
+    width: 164px;
+    padding: 0 11px;
+    justify-content: flex-start;
+}
+#shell:has(#board) #quickToolbar:not(.collapsed) .toolbar-items .tool-btn span,
+#shell:has(#board) #quickToolbar:not(.collapsed) .toolbar-fixed .tool-btn span {
+    display: block;
+    margin-left: 2px;
+}
+#shell:has(#board) #quickToolbar .toolbar-fixed {
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+    padding-top: 6px;
+    border-top: 1px solid var(--rh-line);
+}
+#shell:has(#board) #quickToolbar:not(.collapsed) .toolbar-fixed .tool-btn {
+    width: 164px;
+    padding: 0 11px;
+    justify-content: flex-start;
+}
+#shell:has(#board) #quickToolbar:not(.collapsed) .toolbar-toggle i,
+#shell:has(#board) #quickToolbar:not(.collapsed) .toolbar-toggle svg { transform: rotate(180deg); }
+
+/* Node hierarchy and interaction states. */
+#shell:has(#board) .node {
+    border-radius: 16px;
+    border-color: var(--rh-line-strong);
+    background: var(--rh-surface-solid);
+    color: var(--rh-text);
+    box-shadow: 0 18px 46px rgba(0,0,0,.32);
+}
+#shell:has(#board) .node::before { background: var(--rh-surface-solid); }
+#shell:has(#board) .node-head {
+    min-height: 42px;
+    border-bottom-color: var(--rh-line);
+    background: rgba(255,255,255,.025);
+}
+#shell:has(#board) .node-title { color: var(--rh-muted); }
+#shell:has(#board) .node.selected {
+    outline: 2px solid var(--rh-lime);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 1px rgba(200,245,66,.18), 0 22px 54px rgba(0,0,0,.42);
+}
+#shell:has(#board) .node-port {
+    background: var(--rh-surface-solid);
+    border-color: var(--rh-lime);
+}
+#shell:has(#board) .node-port:hover,
+#shell:has(#board) .node-port.is-active {
+    background: var(--rh-lime);
+    color: #11150b;
+    box-shadow: 0 0 0 4px rgba(200,245,66,.14), 0 8px 20px rgba(0,0,0,.32);
+}
+#shell:has(#board) .node .gen-btn,
+#shell:has(#board) .node .primary-btn,
+#shell:has(#board) .node .run-btn {
+    background: var(--rh-lime) !important;
+    color: #11150b !important;
+    border-color: var(--rh-lime) !important;
+}
+#shell:has(#board) .minimap,
+#shell:has(#board) .minimap-arrange-btn {
+    border-color: var(--rh-line);
+    border-radius: 14px;
+    background: var(--rh-surface) !important;
+    color: var(--rh-muted);
+    box-shadow: 0 18px 42px rgba(0,0,0,.3);
+}
+#shell:has(#board) .minimap { right: 16px; bottom: 16px; }
+#shell:has(#board) .minimap-content { background: rgba(255,255,255,.04); }
+#shell:has(#board) .minimap-viewport { border-color: var(--rh-lime); }
+
+/* Smart canvas keeps its floating controls, but follows the same hierarchy. */
+#shell:has(#composer) .smart-back,
+#shell:has(#composer) .smart-log-toggle,
+#shell:has(#composer) .smart-shortcut-toggle,
+#shell:has(#composer) .smart-workflow-toggle {
+    top: 16px;
+    border-color: var(--rh-line);
+    border-radius: 12px;
+    background: var(--rh-surface) !important;
+    color: var(--rh-muted);
+    box-shadow: 0 16px 38px rgba(0,0,0,.3);
+}
+#shell:has(#composer) .smart-back { left: 16px; }
+#shell:has(#composer) .smart-log-toggle.active,
+#shell:has(#composer) .smart-shortcut-toggle.active,
+#shell:has(#composer) .smart-workflow-toggle.active,
+#shell:has(#composer) .asset-toggle.active {
+    background: var(--rh-lime) !important;
+    border-color: var(--rh-lime) !important;
+    color: #11150b !important;
+}
+#shell:has(#composer) .composer-card {
+    border-color: var(--rh-line-strong);
+    border-radius: 18px;
+    background: rgba(23,26,32,.96) !important;
+    box-shadow: 0 24px 64px rgba(0,0,0,.42);
+}
+#shell:has(#composer) .composer-card .run-btn {
+    width: auto;
+    min-width: 88px;
+    padding: 0 16px;
+    border-radius: 10px;
+    background: var(--rh-lime) !important;
+    color: #11150b !important;
+}
+#shell:has(#composer) .image-node.selected,
+#shell:has(#composer) .image-node.selected:not(.empty-node):not(.group-node):not(.prompt-smart-node):not(.loop-smart-node):not(.minimax-smart-node):not(.smart-group-node) {
+    outline: 2px solid var(--rh-lime);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 1px rgba(200,245,66,.18), 0 22px 54px rgba(0,0,0,.42);
+}
+#shell:has(#composer) .image-node.prompt-smart-node,
+#shell:has(#composer) .image-node.loop-smart-node,
+#shell:has(#composer) .image-node.minimax-smart-node {
+    border-color: var(--rh-line-strong);
+    border-radius: 16px;
+    background: var(--rh-surface-solid);
+}
+
+/* ===== Common panels on secondary pages ===== */
+.chat-shell .topbar,
+.page .page-head,
+.asset-page-head {
+    border-color: var(--rh-line) !important;
+}
+.chat-shell .action-btn,
+.chat-shell .upload-btn,
+.chat-shell .send-btn,
+.page button,
+.asset-manager-root button {
+    border-radius: var(--rh-radius-sm);
+}
+.chat-shell .composer,
+.chat-shell .chat-rail,
+.chat-shell .model-picker-popover,
+.chat-shell .resolution-picker-popover,
+.page .provider-card,
+.page .block,
+.asset-manager-root .asset-manager-card {
+    border-radius: var(--rh-radius-md);
+}
+
+@media (max-width: 760px) {
+    .app-shell { gap: 0; }
+    .app-shell > .sidebar {
+        margin: 8px;
+        height: calc(100vh - 16px);
+        border-radius: var(--rh-radius-md);
+    }
+    .app-shell > .stage { margin: 8px 8px 8px 0; border-radius: var(--rh-radius-md); }
+    #workspace .ws-sidebar { margin: 8px; }
+    #workspace .ws-main { margin: 8px 8px 8px 0; }
+    #workspace .ws-topbar { flex-wrap: wrap; }
+    .shell:has(.board) .topbar,
+    .shell:has(.world) .topbar { top: 8px; left: 8px; right: 8px; }
+}
+
+/* ===== Asset library: three-panel workspace ===== */
+.asset-page {
+    min-height: 100vh;
+    padding: 18px;
+    color: var(--rh-text);
+    background: var(--rh-canvas) !important;
+}
+.asset-page-head {
+    min-height: 64px;
+    padding: 0 4px 14px;
+    border-bottom: 1px solid var(--rh-line) !important;
+}
+.asset-title { color: var(--rh-text) !important; font-size: 18px; letter-spacing: -.03em; }
+.asset-sub, .asset-status { color: var(--rh-muted) !important; }
+.asset-head-actions { gap: 8px; }
+.asset-btn,
+.asset-icon-btn,
+.tree-action,
+.asset-refresh-btn,
+.asset-nav button,
+.asset-content button {
+    border: 1px solid var(--rh-line) !important;
+    border-radius: var(--rh-radius-sm) !important;
+    background: var(--rh-surface) !important;
+    color: var(--rh-muted) !important;
+    transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+.asset-btn:hover,
+.asset-icon-btn:hover,
+.tree-action:hover,
+.asset-refresh-btn:hover,
+.asset-nav button:hover,
+.asset-content button:hover {
+    border-color: var(--rh-line-strong) !important;
+    background: var(--rh-surface-hover) !important;
+    color: var(--rh-text) !important;
+}
+.asset-btn.primary,
+.asset-btn.primary:hover,
+.asset-tabs button.active {
+    border-color: var(--rh-lime) !important;
+    background: var(--rh-lime) !important;
+    color: #11150b !important;
+}
+.asset-tabs {
+    gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rh-line) !important;
+}
+.asset-tabs button {
+    min-height: 34px;
+    padding: 0 13px;
+    border: 1px solid transparent !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: var(--rh-muted) !important;
+}
+.asset-tabs button:hover { background: var(--rh-surface-hover) !important; color: var(--rh-text) !important; }
+.asset-tabs button.active { box-shadow: 0 8px 20px rgba(200,245,66,.14); }
+.asset-manager-root {
+    min-height: calc(100vh - 140px);
+    gap: 12px;
+    background: transparent !important;
+}
+.asset-panel {
+    border: 1px solid var(--rh-line) !important;
+    border-radius: var(--rh-radius-md) !important;
+    background: var(--rh-surface) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,.22);
+}
+.asset-nav, .asset-detail { background: rgba(17,20,25,.94) !important; }
+.asset-content { background: rgba(14,17,21,.78) !important; }
+.panel-head, .content-toolbar, .detail-body, .asset-pref-section,
+.prompt-block, .workflow-card, .detail-caption-card, .storage-file-card,
+.side-upload-card, .avatar-section, .canvas-asset-group { border-color: var(--rh-line) !important; }
+.panel-title strong, .content-heading strong, .panel-title, .panel-title span,
+.detail-name, .detail-meta strong, .asset-card-name, .prompt-row-title,
+.workflow-name, .storage-file-head, .manage-group-title { color: var(--rh-text) !important; }
+.panel-title span, .content-heading span, .detail-meta span, .asset-card-meta,
+.nav-hint, .manage-summary, .asset-sub, .asset-status, .asset-pref-title { color: var(--rh-muted) !important; }
+.nav-row, .tree-row, .prompt-row { border-radius: 10px !important; color: var(--rh-muted) !important; }
+.nav-row.active, .tree-row.active, .prompt-row.active,
+.asset-card.active, .workflow-card.active { 
+    border-color: rgba(200,245,66,.62) !important;
+    background: rgba(200,245,66,.10) !important;
+    box-shadow: inset 3px 0 0 var(--rh-lime);
+}
+.tree-child.active { box-shadow: inset 2px 0 0 var(--rh-lime); }
+.asset-card, .workflow-card, .canvas-asset-card, .asset-drop, .upload-grid-card {
+    border: 1px solid var(--rh-line) !important;
+    border-radius: var(--rh-radius-md) !important;
+    background: rgba(23,26,32,.88) !important;
+}
+.asset-card:hover, .workflow-card:hover, .canvas-asset-card:hover { border-color: var(--rh-line-strong) !important; transform: translateY(-2px); }
+.asset-thumb, .canvas-asset-thumb, .upload-thumb { background: #0d1014 !important; }
+.asset-search-wrap, .asset-search, .manage-select, .canvas-sort-select,
+.asset-card-name-input, .detail-name-input, .detail-caption-textarea,
+.asset-pref-rule-textarea, .asset-pref-editor input, .asset-pref-editor select,
+.asset-pref-editor textarea, .asset-page input, .asset-page select, .asset-page textarea {
+    border-color: var(--rh-line) !important;
+    border-radius: 10px !important;
+    background: rgba(10,12,15,.76) !important;
+    color: var(--rh-text) !important;
+}
+.asset-search::placeholder, .asset-page input::placeholder, .asset-page textarea::placeholder { color: var(--rh-faint) !important; }
+.detail-media-frame, .empty-state, .classification-empty, .storage-empty,
+.detail-empty, .nav-empty { border-color: var(--rh-line) !important; background: rgba(10,12,15,.42) !important; color: var(--rh-muted) !important; }
+.asset-kind-badge, .prompt-tag, .smart-class-pill { border-color: var(--rh-line) !important; background: rgba(200,245,66,.12) !important; color: var(--rh-lime) !important; }
+.asset-lightbox, .storage-settings-overlay { background: rgba(7,9,12,.92) !important; }
+.asset-lightbox-inner, .storage-settings-modal { border: 1px solid var(--rh-line-strong) !important; border-radius: var(--rh-radius-lg) !important; background: var(--rh-surface-solid) !important; }
+
+/* ===== API / ComfyUI settings: compact dark control desk ===== */
+.page {
+    min-height: 100vh;
+    color: var(--rh-text) !important;
+    background: var(--rh-canvas) !important;
+}
+.page .wrap { max-width: 1480px; padding: 20px; }
+.page .page-head {
+    margin-bottom: 14px;
+    padding: 4px 4px 16px;
+    border-bottom: 1px solid var(--rh-line) !important;
+}
+.page .title, .page .editor-title, .page .block-title, .page .side-title,
+.page .provider-name, .page .model-display-name, .page .rh-key-title,
+.page .preview-title, .page .graph-title-row, .page .node-class { color: var(--rh-text) !important; }
+.page .sub, .page .editor-sub, .page .block-desc, .page .hint, .page .side-section-title,
+.page .provider-meta, .page .provider-protocol-hint, .page .graph-hint, .page .preview-desc,
+.page .cli-quick-note { color: var(--rh-muted) !important; }
+.page .layout { gap: 12px; }
+.page .sidebar, .page .content {
+    border: 1px solid var(--rh-line) !important;
+    border-radius: var(--rh-radius-md) !important;
+    background: var(--rh-surface) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,.2);
+}
+.page .sidebar { padding: 12px; }
+.page .content { padding: 16px; }
+.page .provider-card, .page .block, .page .provider-onboarding-card,
+.page .recommend-card, .page .recommend-inline-card, .page .key-panel,
+.page .rh-key-item, .page .graph-card, .page .side-card, .page .mini-card,
+.page .workflow-card, .page .model-row, .page .lora-row {
+    border-color: var(--rh-line) !important;
+    border-radius: var(--rh-radius-md) !important;
+    background: rgba(23,26,32,.82) !important;
+}
+.page .provider-card:hover, .page .model-row:hover, .page .workflow-card:hover { border-color: var(--rh-line-strong) !important; }
+.page .provider-card.active, .page .model-row.active, .page .workspace-mode-tabs .active,
+.page .nodes-toggle.active { border-color: var(--rh-lime) !important; background: rgba(200,245,66,.12) !important; }
+.page .provider-card.active::before { background: var(--rh-lime) !important; }
+.page .add-btn, .page .api-link-btn, .page .cli-quick-btn, .page .upload-btn,
+.page .action-btn, .page .graph-ctrl-btn, .page .key-btn, .page .random-btn,
+.page .tree-action, .page .mini-tool, .page .popup-close {
+    border: 1px solid var(--rh-line) !important;
+    border-radius: 10px !important;
+    background: rgba(25,29,36,.9) !important;
+    color: var(--rh-muted) !important;
+}
+.page .add-btn:hover, .page .api-link-btn:hover, .page .cli-quick-btn:hover,
+.page .upload-btn:hover, .page .action-btn:hover, .page .graph-ctrl-btn:hover,
+.page .key-btn:hover, .page .mini-tool:hover { border-color: var(--rh-line-strong) !important; background: var(--rh-surface-hover) !important; color: var(--rh-text) !important; }
+.page .save-btn, .page .run-btn, .page .onboarding-save-btn, .page .onboarding-fill-btn,
+.page .onboarding-default-btn, .page .recommend-fill, .page .mini-run {
+    border-color: var(--rh-lime) !important;
+    background: var(--rh-lime) !important;
+    color: #11150b !important;
+}
+.page input, .page select, .page textarea, .page .field-frame, .page .pfield-input,
+.page .pfield-textarea, .page .mini-input, .page .mini-textarea, .page .small-input,
+.page .small-select, .page .protocol-selector-wrap, .page .model-protocol-select {
+    border-color: var(--rh-line) !important;
+    border-radius: 10px !important;
+    background: rgba(9,11,14,.76) !important;
+    color: var(--rh-text) !important;
+}
+.page input::placeholder, .page textarea::placeholder { color: var(--rh-faint) !important; }
+.page .inline-code, .page .provider-protocol-pill, .page .gbadge, .page .opt-type-tag,
+.page .preview-pill, .page .recommend-tag { border-color: var(--rh-line) !important; background: rgba(200,245,66,.10) !important; color: var(--rh-lime) !important; }
+.page .graph-svg-wrap, .page .mini-canvas, .page .mini-world, .page .rh-editor-graph-wrap,
+.page .rh-workflow-editor-canvas { border-color: var(--rh-line) !important; background: #0b0d10 !important; }
+.page .gnode, .page .node-card, .page .rh-editor-node { border-color: var(--rh-line-strong) !important; border-radius: 12px !important; background: #171a20 !important; }
+.page .gnode.selected, .page .node-card.selected, .page .rh-editor-node.selected { outline: 2px solid var(--rh-lime); outline-offset: 2px; }
+.page .popup-backdrop, .page .image-lightbox, .page .picker-overlay, .page .rh-workflow-editor-overlay { background: rgba(7,9,12,.84) !important; }
+.page .popup-panel, .page .picker-modal, .page .rh-workflow-editor-modal { border-color: var(--rh-line-strong) !important; border-radius: var(--rh-radius-lg) !important; background: var(--rh-surface-solid) !important; color: var(--rh-text) !important; }
+
+/* ===== Chat: centered creation surface with floating controls ===== */
+.chat-shell {
+    color: var(--rh-text) !important;
+    background: var(--rh-canvas) !important;
+}
+.chat-shell .chat-main { background: radial-gradient(circle at 50% 10%, rgba(200,245,66,.035), transparent 34%), var(--rh-canvas) !important; }
+.chat-shell .topbar { height: 70px; border-bottom: 1px solid var(--rh-line) !important; background: rgba(11,13,16,.84) !important; backdrop-filter: blur(18px); }
+.chat-shell .topbar-inner { max-width: 1180px; }
+.chat-shell .title-block h1, .chat-shell .empty-state-text { color: var(--rh-text) !important; }
+.chat-shell .action-btn, .chat-shell .upload-btn, .chat-shell .model-picker-button, .chat-shell .resolution-picker-button {
+    border: 1px solid var(--rh-line) !important;
+    border-radius: 10px !important;
+    background: rgba(23,26,32,.86) !important;
+    color: var(--rh-muted) !important;
+}
+.chat-shell .action-btn:hover, .chat-shell .upload-btn:hover, .chat-shell .model-picker-button:hover, .chat-shell .resolution-picker-button:hover { border-color: var(--rh-line-strong) !important; background: var(--rh-surface-hover) !important; color: var(--rh-text) !important; }
+.chat-shell .composer { border: 1px solid var(--rh-line-strong) !important; border-radius: 18px !important; background: rgba(23,26,32,.94) !important; box-shadow: 0 24px 70px rgba(0,0,0,.4) !important; }
+.chat-shell .composer textarea { color: var(--rh-text) !important; }
+.chat-shell .composer textarea::placeholder { color: var(--rh-faint) !important; }
+.chat-shell .model-picker-button, .chat-shell .resolution-picker-button { min-height: 38px; }
+.chat-shell .model-picker-popover, .chat-shell .resolution-picker-popover, .chat-shell .system-prompt-popover,
+.chat-shell .chat-rail, .chat-shell .image-preview-modal { border-color: var(--rh-line-strong) !important; background: rgba(23,26,32,.98) !important; color: var(--rh-text) !important; box-shadow: 0 24px 70px rgba(0,0,0,.5) !important; }
+.chat-shell .model-picker-option, .chat-shell .resolution-picker-option { border-color: var(--rh-line) !important; color: var(--rh-muted) !important; }
+.chat-shell .model-picker-option.active, .chat-shell .resolution-picker-option.active,
+.chat-shell .resolution-picker-scope button.active { border-color: var(--rh-lime) !important; background: rgba(200,245,66,.12) !important; color: var(--rh-lime) !important; }
+.chat-shell .send-btn { border: 1px solid var(--rh-lime) !important; background: var(--rh-lime) !important; color: #11150b !important; box-shadow: 0 8px 24px rgba(200,245,66,.16) !important; }
+.chat-shell .send-btn:hover { background: #d9ff68 !important; transform: translateY(-1px); }
+.chat-shell .chat-rail .thread-item.active, .chat-shell .thread-item:hover { background: var(--rh-surface-hover) !important; color: var(--rh-text) !important; }
+.chat-shell .message-bubble, .chat-shell .assistant-message, .chat-shell .user-message { border-color: var(--rh-line) !important; }
+
+/* ===== Standalone tools: same dark canvas, same focused control language ===== */
+body:has(.container-box), body:has(.layout-container) {
+    color: var(--rh-text) !important;
+    background: var(--rh-canvas) !important;
+}
+body:has(.container-box) .container-box, body:has(.layout-container) .layout-container { color: var(--rh-text) !important; }
+body:has(.container-box) .text-black, body:has(.layout-container) .text-black { color: var(--rh-text) !important; }
+body:has(.container-box) .text-gray-800, body:has(.container-box) .text-gray-700,
+body:has(.container-box) .text-gray-600, body:has(.container-box) .text-gray-500 { color: var(--rh-muted) !important; }
+body:has(.container-box) .text-gray-400, body:has(.container-box) .text-gray-300 { color: var(--rh-faint) !important; }
+body:has(.container-box) .border-gray-100, body:has(.container-box) .border-gray-200,
+body:has(.container-box) .border-gray-200\/50 { border-color: var(--rh-line) !important; }
+body:has(.container-box) .bg-white, body:has(.container-box) .bg-gray-50,
+body:has(.container-box) .bg-\[\#f8f8f9\] { background: rgba(23,26,32,.88) !important; }
+body:has(.container-box) .container-box, body:has(.layout-container) .layout-container { max-width: 1420px; }
+body:has(.container-box) .nano-input, body:has(.container-box) .size-select,
+body:has(.container-box) .size-custom, body:has(.container-box) input,
+body:has(.container-box) select, body:has(.container-box) textarea {
+    border-color: var(--rh-line) !important;
+    background: rgba(10,12,15,.78) !important;
+    color: var(--rh-text) !important;
+}
+body:has(.container-box) input::placeholder, body:has(.container-box) textarea::placeholder { color: var(--rh-faint) !important; }
+body:has(.container-box) .tool-panel, body:has(.container-box) .control-panel,
+body:has(.container-box) .engine-panel, body:has(.container-box) .console-card,
+body:has(.container-box) .result-frame, body:has(.container-box) .masonry-item,
+body:has(.container-box) .upload-item, body:has(.layout-container) .console-card {
+    border: 1px solid var(--rh-line) !important;
+    border-radius: var(--rh-radius-lg) !important;
+    background: rgba(23,26,32,.84) !important;
+    box-shadow: 0 20px 55px rgba(0,0,0,.22) !important;
+}
+body:has(.container-box) .upload-item:hover { border-color: var(--rh-lime) !important; background: rgba(200,245,66,.08) !important; }
+body:has(.container-box) .glass-btn, body:has(.layout-container) .btn-render {
+    border: 1px solid var(--rh-lime) !important;
+    background: var(--rh-lime) !important;
+    color: #11150b !important;
+    box-shadow: 0 12px 28px rgba(200,245,66,.14) !important;
+}
+body:has(.container-box) .glass-btn:hover, body:has(.layout-container) .btn-render:hover { background: #d9ff68 !important; transform: translateY(-1px); }
+body:has(.container-box) .mode-switcher, body:has(.container-box) .engine-switch { border-color: var(--rh-line) !important; background: rgba(10,12,15,.72) !important; }
+body:has(.container-box) .mode-btn.active, body:has(.container-box) .engine-btn.active { background: var(--rh-lime) !important; color: #11150b !important; }
+body:has(.container-box) .masonry-item:hover { border-color: var(--rh-line-strong) !important; transform: translateY(-3px); }
+body:has(.container-box) .gallery-lightbox, body:has(.layout-container) .gallery-lightbox { background: rgba(7,9,12,.94) !important; }
+body:has(.container-box) .studio-preview-frame { border-color: var(--rh-line-strong) !important; background: #0b0d10 !important; }
+
+@media (max-width: 900px) {
+    .asset-page { padding: 10px; }
+    .asset-manager-root { grid-template-columns: 1fr !important; }
+    .asset-nav, .asset-detail { min-height: 220px; }
+    .page .wrap { padding: 12px; }
+    .page .layout { grid-template-columns: 1fr !important; }
+    .page .sidebar { max-height: none; }
+    .chat-shell .topbar { height: auto; min-height: 64px; }
+    body:has(.container-box) .container-box, body:has(.layout-container) .layout-container { padding-left: 14px !important; padding-right: 14px !important; }
+}
